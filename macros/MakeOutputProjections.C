@@ -87,3 +87,143 @@ void TObjArrProject(TObjArray *dir, TFile &outputFile, TString projectionType /*
   // femtolist->Delete(); // alternatively  list->SetOwner(true);
   // delete femtolist;
 }
+
+
+void MakeCFProjections()
+{
+
+  TString dataName = "mm1";
+  TString inFileName = "MyOutput" + dataName + ".root";
+  TFile inFile(inFileName,"read");
+  TList *list = (TList*)inFile.Get("MyList");
+  
+  
+
+  TFile outFile("CFs.root", "update");
+  // Setup dataset directory
+  TString outDirName = dataName;
+  TDirectory *outDir = outFile.GetDirectory(outDirName);
+  if(!outDir) {
+    outDir = outFile.mkdir(outDirName);
+  }
+  // Setup subdirectories
+  TDirectory *outDirNum = outDir->GetDirectory("Num");
+  if(!outDirNum) {
+    outDirNum = outDir->mkdir("Num");
+  }
+  TDirectory *outDirDen = outDir->GetDirectory("Den");
+  if(!outDirDen) {
+    outDirDen = outDir->mkdir("Den");
+  }
+  // TDirectory *outDirCF = outDir.GetDirectory("CF");
+  // if(!outDirCF) {
+  //   outDirCF = outDir.mkdir("CF");
+  // }
+  TString pairTypes[3] = {"LamLam", "ALamALam", "LamALam"};
+  for(Int_t i = 0; i < 3; i++) {
+    SaveNumsDens(outDirNum, outDirDen, list, pairTypes[i]);
+  }
+
+  // Now do CF stuff? Probably in separate function.  Get and save counts, make cfs
+}
+
+void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString pairType)
+{
+  // Save numerator and denominator distributions
+  TH3F *num3D = (TH3F*) list->FindObject("fSignal" + pairType);
+  TH3F *den3D = (TH3F*) list->FindObject("fBkg" + pairType);
+  if(!num3D) {
+    cout<<"Could not find 3D Num!"<<endl;
+    if(num3D) {delete num3D; num3D = NULL;}
+    if(den3D) {delete den3D; den3D = NULL;}
+    return;
+  }
+  if(!den3D) {
+    cout<<"Could not find 3D Den!"<<endl;
+    if(num3D) {delete num3D; num3D = NULL;}
+    if(den3D) {delete den3D; den3D = NULL;}
+    return;
+  }
+  
+
+  // Loop over the centrality bins
+  for(Int_t i = 1; i < 21; i++) {
+    TH1D *num1D = ProjectCentralityBin(num3D, i, i, pairType);
+    if(!num1D) {
+      cout<<"Centrality bin "<<i*5<<" does not have the needed projections"<<endl;
+      if(num1D) {delete num1D; num1D = NULL;}
+      // if(den1D) {delete den1D; den1D = NULL;}
+      continue;
+    }
+    
+    TString numName = "Num";
+    TString currentNameNum = num1D->GetName();
+    numName += currentNameNum;
+    num1D->SetTitle(numName);
+    num1D->SetDirectory(0);
+    numDir->cd();
+    num1D->Write(numName, TObject::kOverwrite);
+
+    TH1D *den1D = ProjectCentralityBin(den3D, i, i, pairType);
+    if(!den1D) {
+      cout<<"Centrality bin "<<i*5<<" does not have the needed projections"<<endl;
+      if(num1D) {delete num1D; num1D = NULL;}
+      if(den1D) {delete den1D; den1D = NULL;}
+      continue;
+    }
+    cout<<num1D<<"\t"<<den1D<<endl;
+    TString denName = "Den";
+    TString currentNameDen =  den1D->GetName();
+    denName += currentNameDen;
+    den1D->SetTitle(denName);
+    den1D->SetDirectory(0);
+    denDir->cd();
+    den1D->Write(denName, TObject::kOverwrite);
+
+
+  //   cout<<"About to delete 1D hists"<<endl;
+  //   if(num1D) {delete num1D; num1D = NULL;}
+  //   if(den1D) {delete den1D; den1D = NULL;}
+  }
+  
+  // if(num3D) {delete num3D; num3D = NULL;}
+  // if(den3D) {delete den3D; den3D = NULL;}
+}
+
+TH1D* ProjectCentralityBin(TH3F* h3D, Int_t centLow, Int_t centHigh, TString pairType)
+{
+
+  // Assume only one "variable cut" bin
+  Int_t varBinLow = 1;
+  Int_t varBinHigh = 1;
+  TString name1D = Get1DHistNameSuffix(centLow, centHigh, pairType);
+  TH1D *h1D = h3D->ProjectionZ(name1D, varBinLow,varBinHigh, centLow, centHigh);
+  // h1D->SetTitle(Get1DHistNameSuffix(centLow, centHigh, pairType));
+  
+  return h1D;
+}
+
+TString Get1DHistNameSuffix(Int_t lowBin, Int_t highBin, TString pairType)
+{
+
+  TString lowCent = ConvertCentBinToString(lowBin, kFALSE);
+  TString highCent = ConvertCentBinToString(lowBin, kTRUE);
+
+  TString suffix = pairType + lowCent + highCent;
+
+  return suffix;
+}
+
+TString ConvertCentBinToString(Int_t bin, Bool_t upper)
+{
+  TString s = "";
+  if(upper) {
+    Int_t x = bin * 5;
+    s += x;
+  } else {
+    Int_t x = (bin - 1) * 5;
+    s += x;
+  }
+
+  return s;
+}
