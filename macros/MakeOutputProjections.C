@@ -88,13 +88,36 @@ void TObjArrProject(TObjArray *dir, TFile &outputFile, TString projectionType /*
   // delete femtolist;
 }
 
-
-void MakeCFProjections()
+void MakeCFProjections(Bool_t isDataReal)
 {
+  if(isDataReal) {
+    TString dataNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
+    for(Int_t i = 0; i < 5; i++) {
+      MakeCFProjectionForDataSet(dataNamesReal[i]);
+    }
+  } else {
+    TString dataNamesMC[2] = {"mm", "pp"};
+    for(Int_t i = 0; i < 2; i++) {
+      MakeCFProjectionForDataSet(dataNamesMC[i]);
+    }
+  }
+}
 
-  TString dataName = "mm1";
+
+void MakeCFProjectionForDataSet(TString dataName)
+{
+  // Make all the numerator and denominator projections for one data set
+  // and save them to a root file in their own directory.
+
+  // TString dataName = "mm1";
   TString inFileName = "MyOutput" + dataName + ".root";
   TFile inFile(inFileName,"read");
+  if (inFile.IsZombie()) {
+    cout << "Error opening file " << inFileName << endl;
+    return;
+  }
+
+  
   TList *list = (TList*)inFile.Get("MyList");
   
   
@@ -160,6 +183,7 @@ void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString p
     TString currentNameNum = num1D->GetName();
     numName += currentNameNum;
     num1D->SetTitle(numName);
+    num1D->SetName(numName);
     num1D->SetDirectory(0);
     numDir->cd();
     num1D->Write(numName, TObject::kOverwrite);
@@ -175,6 +199,7 @@ void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString p
     TString denName = "Den";
     TString currentNameDen =  den1D->GetName();
     denName += currentNameDen;
+    den1D->SetTitle(denName);
     den1D->SetTitle(denName);
     den1D->SetDirectory(0);
     denDir->cd();
