@@ -1,5 +1,7 @@
 void MakeOutputProjections()
 {
+  // Main function for projecting momentum resolution
+  // and average separation plots
   MakeMomResProjections();
   MakeAvgSepProjections();
 }
@@ -195,15 +197,17 @@ void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString p
       if(den1D) {delete den1D; den1D = NULL;}
       continue;
     }
-    cout<<num1D<<"\t"<<den1D<<endl;
     TString denName = "Den";
     TString currentNameDen =  den1D->GetName();
+    // cout<<currentNameDen<<endl;
     denName += currentNameDen;
+    // cout<<numName<<"\t"<<denName<<endl;
     den1D->SetTitle(denName);
-    den1D->SetTitle(denName);
+    den1D->SetName(denName);
     den1D->SetDirectory(0);
     denDir->cd();
     den1D->Write(denName, TObject::kOverwrite);
+    // cout<<"Num:\t"<<num1D->GetName()<<"\tDen:\t"<<den1D->GetName()<<endl;
 
 
   //   cout<<"About to delete 1D hists"<<endl;

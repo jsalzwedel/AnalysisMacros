@@ -1,36 +1,102 @@
-void MakeCFs()
+void MakeCFs(Bool_t isDataReal)
 {
   // Merge between datasets, then merge centralities
+  Int_t rebinNumber = 4;
+  Double_t lowNorm = 0.5;
+  Double_t highNorm = 0.7;
   
+  TFile f("CFs.root", "update");
+
+
+  if(isDataReal) {
+    TString dataNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
+    for(Int_t i = 0; i < 5; i++) {
+      TDirectory *dir = f.Get(dataNamesReal[i]);
+      MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
+    }
+  } else {
+    TString dataNamesMC[2] = {"mm", "pp"};
+    for(Int_t i = 0; i < 2; i++) {
+      TDirectory *dir = f.Get(dataNamesReal[i]);
+      MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
+    }
+  }
+  
+  // TDirectory *dir = f.Get("mm1");
+  // MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
+
+  
+
   
 }
 
-void MakeCFsForDataset(TFile &file, TString dataName)
+void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm, Double_t highNorm)
 {
-
-  
-  TDirectory *cfDir = file.GetDirectory("CF");
+  TDirectory *cfDir = dataDir->GetDirectory("CF");
   if(!cfDir) {
-    cfDir = file.mkdir("CF");
+    cfDir = dataDir->mkdir("CF");
   }
-  TDirectory *countDir = file.GetDirectory("Count");
+  TDirectory *countDir = dataDir->GetDirectory("Count");
   if(!countDir) {
-    countDir = file.mkdir("Count");
+    countDir = dataDir->mkdir("Count");
   }
 
   //Iterate over the nums and dens
   //For each pair, make a cf and save it to file
-  TDirectory *numDir = file.GetDirectory("Num");
+  TDirectory *numDir = dataDir->GetDirectory("Num");
   if(!numDir) {
-    numDir = file.mkdir("Num");
+    cout<<"No Num directory in "<<dataDir->GetName()<<endl;
+    return;
   }
-  TDirectory *denDir = file.GetDirectory("Den");
+  TDirectory *denDir = dataDir->GetDirectory("Den");
   if(!denDir) {
-    denDir = file.mkdir("Den");
+    cout<<"No Den directory "<<dataDir->GetName()<endl;
+    return;
   }
 
-  //
+  // Grab each numerator and denominator in sequence
+  TIter numIter(numDir->GetListOfKeys());
+  TIter denIter(denDir->GetListOfKeys());
 
+  TObject *numObj = NULL;
+  TObject *denObj = NULL;
+
+  while (numObj = numIter()) {
+    TKey *numKey = dynamic_cast<TKey*>(numObj);
+    //Get the num and den hists
+    TH1D *numHist = dynamic_cast<TH1D*>(numKey->ReadObj());
+    if(!numHist) {
+      cout<<"Could not find appropriate num hist"<<endl;
+      return;
+    }
+    denObj = denIter();
+    TKey *denKey = dynamic_cast<TKey*>(denObj);
+    TH1D *denHist = dynamic_cast<TH1D*>(denKey->ReadObj());
+    if(!denHist) {
+      cout<<"Could not find appropriate den hist"<<endl;
+      delete numHist; numHist = NULL;
+      continue;
+    }
+    // Check that they match each other by comparing names
+    TString numName = numHist->GetName();
+    TString denName = denHist->GetName();
+    TString numCopy = numName;
+    numCopy.ReplaceAll("Num","Den");
+    if(numCopy != denName) {
+      cout<<"Num and den hists don't match."<<endl;
+      cout<<numName<<"\t"<<denName<<endl;
+    
+      delete numHist; numHist = NULL;
+      delete denHist; denHist = NULL;
+      continue;
+    }
+    // Finally, make and save the CF and counts
+    TH1D *cf = MakeACF(numHist, denHist, rebinNumber, lowNorm, highNorm);
+    TVectorD count = GetNumCounts(numHist, lowNorm, highNorm);  
+    WriteObjectsToDir(cfDir, countDir, cf, count);
+
+    cout<<"Finished making cf"<<endl;
+  }
 }
 
 void WriteObjectsToDir(TDirectory *cfDir, TDirectory *countDir, TH1D *cf, TVectorD &counts)
@@ -49,10 +115,8 @@ void WriteObjectsToDir(TDirectory *cfDir, TDirectory *countDir, TH1D *cf, TVecto
 TH1D* MakeACF(TH1D *num, TH1D *den, Int_t rebinNum, Double_t lowNorm, Double_t highNorm)
 {
   // Make a correlation function out of a single num/den pair
-
   num->Sumw2();
   den->Sumw2();
-  
   // Rebin the histograms
   num->Rebin(rebinNum);
   den->Rebin(rebinNum);
@@ -67,10 +131,9 @@ TH1D* MakeACF(TH1D *num, TH1D *den, Int_t rebinNum, Double_t lowNorm, Double_t h
   cf->Divide(den);
 
   TString cfName = num->GetName();
-  cout<<"Num name:\t"<<cfName<<endl;
   cfName.ReplaceAll("Num","CF");
   cf->SetName(cfName);
-  cout<<"CF Name is:\t"<< cf->GetName()<<endl;
+  // cout<<"CF Name is:\t"<< cf->GetName()<<endl;
   cf->SetTitle(cfName);
   return cf;
 }
