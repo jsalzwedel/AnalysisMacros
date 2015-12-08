@@ -1,15 +1,23 @@
-// void MakeCombinedCFs()
-// {
+// ******** Workflow *******
+//
+//
+// (0. Make CFs using MakeCFs.C)
+// 1. Run MakeCombinedCFs()
+// 2. Run CombineCentralitiesForEachPairType()
+// 3. Run CombineLLAA()
+//
+// *************************
 
 
 
-// }
 #include <iostream>
-
 #include <vector>
 #include "TDirectory.h"
 #include "TFile.h"
 #include "TString.h"
+#include "TH1D.h"
+#include "TVectorD.h"
+#include "TKey.h"
 
 
 using namespace std;
@@ -27,7 +35,6 @@ vector<TDirectory*> GetDirectories(TFile &f, vector<TString> dataSetNames, TStri
   for(UInt_t i = 0; i < nDirs; i++) {
     // TDirectory *dir = (TDirectory*) f.Get(dataSetNames[i]);
     TString fullDirName = dataSetNames[i] + "/" + dirName;
-    cout<<"Dir name"<<fullDirName<<endl;
     TDirectory *dir = (TDirectory*) f.Get(fullDirName);
     assert(dir);
     dirs.push_back(dir);
@@ -87,15 +94,11 @@ void MakeCombinedCFs()
   }
 
   UInt_t nDirs = cfDirs.size();
-  cout<<"Size of dirs:\t"<<nDirs<<endl;
-  cout<<cfDirs[0]<<endl;
-  cout<<cfDirs[0]->GetName()<<endl;
   // Merge each centrality one at a time
   // Load the cfs and counts into vectors for that centrality
   // Find all the cfs and counts that match the name of the CF
   // in the first directory
   TIter iter(cfDirs[0]->GetListOfKeys());
-  cout<<"test3"<<endl;
   TObject *obj = NULL;
 
   while ( (obj = iter()) ) {
@@ -143,4 +146,95 @@ void MakeCombinedCFs()
   }
   // cfs.push_back((TH1D*)cfsDirs[0]->Get)
   
+}
+
+void CombineCentralities(TString pairType)
+{
+  // Gather the cfs and counts to combine centrality bins
+
+
+  vector<TString> centBins010 = {"05", "510"};
+  vector<TString> centBins1030 = {"1015", "1520", "2025", "2530"};
+  vector<TString> centBins3050 = {"3035", "3540", "4045", "4550"};
+
+  vector<TString> finalCentBins = {"010", "1030", "3050"};
+
+  vector<vector<TString> > centBins;
+  centBins.push_back(centBins010);
+  centBins.push_back(centBins1030);
+  centBins.push_back(centBins3050);
+
+  TFile f("CFs.root","update");
+  TDirectory *mergeDir = (TDirectory*) f.Get("Merged");
+  if(!mergeDir) {
+    cout<<"Merge directory does not exist. Cannot merge."<<endl;
+    return;
+  }
+
+  //For each merge group, get the necessary CFs and counts
+  for(UInt_t iMerge = 0; iMerge < centBins.size(); iMerge++) {
+    vector<TH1D*> cfs;
+    vector<Double_t> counts;
+    Double_t totalCounts = 0;
+    for(UInt_t iCF = 0; iCF < centBins[iMerge].size(); iCF++) {
+      TString cfName = "CF" + pairType + centBins[iMerge][iCF];
+      TH1D *cf = (TH1D*)mergeDir->Get(cfName);
+      if(!cf) {
+	cout<<"Could not find CF named "<<cfName<<" in "<<mergeDir->GetName()<<endl;
+	return;
+      }
+      cfs.push_back(cf);
+      TString countName = "Count" + pairType + centBins[iMerge][iCF];
+      TVectorD *count = (TVectorD*) mergeDir->Get(countName);
+      totalCounts += count[0](0);
+      counts.push_back(count[0](0));
+    }
+
+
+    // Finally, combine the CFs
+    TH1D *combinedCF = CombineCFs(cfs, counts);
+    TVectorD finalCount(1);
+    finalCount[0] = totalCounts;
+
+    // Set names
+    TString combinedCFName = "CF" + pairType + finalCentBins[iMerge];
+    TString combinedCountName = "Count" + pairType + finalCentBins[iMerge];
+    combinedCF->SetName(combinedCFName);
+    combinedCF->SetTitle(combinedCFName);
+
+    // Set axis ranges
+    combinedCF->SetAxisRange(0.9, 1.1, "Y");
+    combinedCF->SetAxisRange(0., 1., "X");
+    
+    //
+
+    cout<<"Writing combined CF "<<combinedCF->GetName()
+    	<<" to "<<mergeDir->GetName()<<endl;
+    combinedCF->SetDirectory(0);
+    mergeDir->cd();
+    combinedCF->Write(combinedCF->GetName(), TObject::kOverwrite);
+    finalCount.Write(combinedCountName, TObject::kOverwrite);
+
+    
+  }
+  
+
+}
+
+
+void CombineCentralitiesForEachPairType()
+{
+  // Run after merging data sets
+  vector<TString> pairNames = {"LamLam", "ALamALam", "LamALam"};
+  for(UInt_t i = 0; i < pairNames.size(); i++) {
+    CombineCentralities(pairNames[i]);
+  }
+}
+
+
+void CombineLLAA()
+{
+  // Run after merging centralities
+
+
 }
