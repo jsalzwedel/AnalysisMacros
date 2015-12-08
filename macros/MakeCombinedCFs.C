@@ -1,5 +1,5 @@
 // ******** Workflow *******
-//
+// Needs to be run using Root 6
 //
 // (0. Make CFs using MakeCFs.C)
 // 1. Run MakeCombinedCFs()
@@ -225,6 +225,8 @@ void CombineCentralities(TString pairType)
 void CombineCentralitiesForEachPairType()
 {
   // Run after merging data sets
+
+  
   vector<TString> pairNames = {"LamLam", "ALamALam", "LamALam"};
   for(UInt_t i = 0; i < pairNames.size(); i++) {
     CombineCentralities(pairNames[i]);
@@ -235,6 +237,61 @@ void CombineCentralitiesForEachPairType()
 void CombineLLAA()
 {
   // Run after merging centralities
+  vector<TString> centBins = {"010", "1030", "3050"};
+  vector<TString> pairTypes = {"LamLam", "ALamALam"};
+  TString finalPairType = "LLAA";
 
 
+  // Get data dir
+  TFile f("CFs.root","update");
+  TDirectory *mergeDir = (TDirectory*) f.Get("Merged");
+  if(!mergeDir) {
+    cout<<"Merge directory does not exist. Cannot merge."<<endl;
+    return;
+  }
+
+
+  for(UInt_t iCent = 0; iCent < centBins.size(); iCent++) {
+    vector<TH1D*> cfs;
+    vector<Double_t> counts;
+    Double_t totalCounts = 0;
+    for(UInt_t iType = 0; iType < pairTypes.size(); iType++) {
+      TString cfName = "CF" + pairTypes[iType] + centBins[iCent];
+      TH1D *cf = (TH1D*)mergeDir->Get(cfName);
+      if(!cf) {
+	cout<<"Could not find CF named "<<cfName<<" in "<<mergeDir->GetName()<<endl;
+	return;
+      }
+      cfs.push_back(cf);
+      TString countName = "Count" + pairTypes[iType] + centBins[iCent];
+      TVectorD *count = (TVectorD*) mergeDir->Get(countName);
+      totalCounts += count[0](0);
+      counts.push_back(count[0](0));
+    }
+
+    // Finally, combine the CFs
+    TH1D *combinedCF = CombineCFs(cfs, counts);
+    TVectorD finalCount(1);
+    finalCount[0] = totalCounts;
+
+    // Set names
+    TString combinedCFName = "CF" + finalPairType + centBins[iCent];
+    TString combinedCountName = "Count" + finalPairType + centBins[iCent];
+    combinedCF->SetName(combinedCFName);
+    combinedCF->SetTitle(combinedCFName);
+
+    // Set axis ranges
+    combinedCF->SetAxisRange(0.9, 1.1, "Y");
+    combinedCF->SetAxisRange(0., 1., "X");
+    
+    //
+
+    cout<<"Writing combined CF "<<combinedCF->GetName()
+    	<<" to "<<mergeDir->GetName()<<endl;
+    combinedCF->SetDirectory(0);
+    mergeDir->cd();
+    combinedCF->Write(combinedCF->GetName(), TObject::kOverwrite);
+    finalCount.Write(combinedCountName, TObject::kOverwrite);
+  
+  }
 }
