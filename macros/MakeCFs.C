@@ -17,7 +17,7 @@ void MakeCFs(Bool_t isDataReal)
   } else {
     TString dataNamesMC[2] = {"mm", "pp"};
     for(Int_t i = 0; i < 2; i++) {
-      TDirectory *dir = f.Get(dataNamesReal[i]);
+      TDirectory *dir = f.Get(dataNamesMC[i]);
       MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
     }
   }

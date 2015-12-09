@@ -76,13 +76,23 @@ TH1D *CombineCFs(vector<TH1D*> cfs, vector<Double_t> counts)
 }
 
 
-void MakeCombinedCFs()
+void MakeCombinedCFs(Bool_t isDataReal)
 {
   cout<<"Making combined cfs"<<endl;
 
   // Get the directories for the cfs and counts
-  TString dataSetNamesArr[] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
-  vector<TString> dataSetNames(dataSetNamesArr, dataSetNamesArr+5);
+  vector<TString> dataSetNames;
+  if(!isDataReal) {
+    dataSetNames.push_back("mm");
+    dataSetNames.push_back("pp");
+  } else {
+    dataSetNames.push_back("mm1");
+    dataSetNames.push_back("mm2");
+    dataSetNames.push_back("mm3");
+    dataSetNames.push_back("pp1");
+    dataSetNames.push_back("pp2");
+  }
+  // vector<TString> dataSetNames(dataSetNamesArr, dataSetNamesArr+5);
   TString cfDirName = "CF";
   TString countDirName = "Count";
   TFile f("CFs.root","update");
