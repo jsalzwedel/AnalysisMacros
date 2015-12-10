@@ -1,0 +1,73 @@
+#include "TFile.h"
+#include "TDirectory.h"
+// #include "TIter.h"
+#include "TObject.h"
+#include "TCanvas.h"
+#include "TF1.h"
+#include "TString.h"
+#include "TKey.h"
+#include "TH1D.h"
+#include "TStyle.h"
+
+void DrawUnityLineAvgSep()
+{
+  TFile f("AvgSep.root");
+  TDirectory *dir = (TDirectory*)f.GetDirectory("AvgSepNew");
+
+  TIter iter(dir->GetListOfKeys());
+  TObject *obj = NULL;
+  gStyle->SetOptStat(0);
+
+  TCanvas *c1 = new TCanvas("AvgSep","AvgSep");
+  c1->Divide(5,2,0.0000,0.01);
+
+  TF1 *unity = new TF1("unity","1",0., 20.);
+  unity->SetLineColor(kBlack);
+
+  TString titles[] = {"p p",
+		      "#pi- #pi-",
+		      "#bar{p} #bar{p}",
+		      "#pi+ #pi+",
+		      "#bar{p} #pi-",
+		      "p #pi+",
+		      "p #pi-",
+		      "#bar{p} #pi+",
+		      "p #bar{p}",
+		      "#pi- #pi+"};
+
+  Double_t vert[] = {8, // pp
+		     12, // pi- pi-
+		     8, // pbar pbar
+		     12,// pi+ pi+
+		     16,// pbar pi-
+		     16,// p pi+
+		     16,// p pi-
+		     16,// pbar p+
+		     14,// p pbar
+		     16};// pi- pi+
+		      
+  gStyle->SetTitleSize(0.2,"t");
+  Int_t iPad = 1;
+  while( (obj = iter()) ) {
+    TKey *key = dynamic_cast<TKey*>(obj);
+
+    //Get Histo
+    TH1D *hist = dynamic_cast<TH1D*>(key->ReadObj());
+    if(!hist) continue;
+
+    hist->SetTitle(titles[iPad-1]);
+
+
+    c1->cd(iPad)->SetTopMargin(0.05);
+    c1->cd(iPad)->SetBottomMargin(0.05);
+    iPad++;
+
+    hist->DrawCopy();
+    unity->Draw("same");
+
+    TLine *l = new TLine(vert[iPad-2], 0.5, vert[iPad-2], 1.5);
+    l->SetLineColor(kRed);
+    l->Draw("same");
+    
+  }
+}
