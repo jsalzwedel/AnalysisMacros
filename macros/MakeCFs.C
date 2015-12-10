@@ -1,34 +1,54 @@
-void MakeCFs(Bool_t isDataReal)
+
+TVectorD GetNumCounts(TH1D *num, Double_t lowNorm, Double_t highNorm)
 {
-  // Merge between datasets, then merge centralities
-  Int_t rebinNumber = 4;
-  Double_t lowNorm = 0.5;
-  Double_t highNorm = 0.7;
-  
-  TFile f("CFs.root", "update");
-
-
-  if(isDataReal) {
-    TString dataNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
-    for(Int_t i = 0; i < 5; i++) {
-      TDirectory *dir = f.Get(dataNamesReal[i]);
-      MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
-    }
-  } else {
-    TString dataNamesMC[2] = {"mm", "pp"};
-    for(Int_t i = 0; i < 2; i++) {
-      TDirectory *dir = f.Get(dataNamesMC[i]);
-      MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
-    }
-  }
-  
-  // TDirectory *dir = f.Get("mm1");
-  // MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
-
-  
-
-  
+  Double_t numCounts = num->Integral(num->FindBin(lowNorm), num->FindBin(highNorm));
+  TVectorD count(1);
+  count[0] = numCounts;
+  return count;
 }
+
+void WriteObjectsToDir(TDirectory *cfDir, TDirectory *countDir, TH1D *cf, TVectorD &counts)
+{
+  cout<<"Writing objects to "<<cfDir->GetName()<<endl;
+  cfDir->cd();
+  cf->SetDirectory(0);
+  cf->Write(cf->GetName(), TObject::kOverwrite);
+
+  countDir->cd();
+  TString countName = cf->GetName();
+  countName.ReplaceAll("CF","Count");
+  counts.Write(countName, TObject::kOverwrite);
+}
+
+
+TH1D* MakeACF(TH1D *num, TH1D *den, Int_t rebinNum, Double_t lowNorm, Double_t highNorm)
+{
+  // Make a correlation function out of a single num/den pair
+  num->Sumw2();
+  den->Sumw2();
+  // Rebin the histograms
+  num->Rebin(rebinNum);
+  den->Rebin(rebinNum);
+
+  Double_t numScale = num->Integral(num->FindBin(lowNorm), num->FindBin(highNorm));
+  Double_t denScale = den->Integral(den->FindBin(lowNorm), den->FindBin(highNorm));
+
+  if(numScale > 0) num->Scale(1./numScale);
+  if(denScale > 0) den->Scale(1./denScale);
+
+  TH1D *cf = (TH1D*)num->Clone();
+  cf->Divide(den);
+
+  TString cfName = num->GetName();
+  cfName.ReplaceAll("Num","CF");
+  cf->SetName(cfName);
+  // cout<<"CF Name is:\t"<< cf->GetName()<<endl;
+  cf->SetTitle(cfName);
+  return cf;
+}
+
+
+
 
 void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm, Double_t highNorm)
 {
@@ -50,7 +70,7 @@ void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm,
   }
   TDirectory *denDir = dataDir->GetDirectory("Den");
   if(!denDir) {
-    cout<<"No Den directory "<<dataDir->GetName()<endl;
+    cout<<"No Den directory "<<dataDir->GetName()<<endl;
     return;
   }
 
@@ -61,7 +81,7 @@ void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm,
   TObject *numObj = NULL;
   TObject *denObj = NULL;
 
-  while (numObj = numIter()) {
+  while ((numObj = numIter())) {
     TKey *numKey = dynamic_cast<TKey*>(numObj);
     //Get the num and den hists
     TH1D *numHist = dynamic_cast<TH1D*>(numKey->ReadObj());
@@ -99,52 +119,45 @@ void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm,
   }
 }
 
-void WriteObjectsToDir(TDirectory *cfDir, TDirectory *countDir, TH1D *cf, TVectorD &counts)
-{
-  cout<<"Writing objects to "<<cfDir->GetName()<<endl;
-  cfDir->cd();
-  cf->SetDirectory(0);
-  cf->Write(cf->GetName(), TObject::kOverwrite);
 
-  countDir->cd();
-  TString countName = cf->GetName();
-  countName.ReplaceAll("CF","Count");
-  counts.Write(countName, TObject::kOverwrite);
+
+
+
+
+void MakeCFs(Bool_t isDataReal)
+{
+  // Merge between datasets, then merge centralities
+  Int_t rebinNumber = 4;
+  Double_t lowNorm = 0.5;
+  Double_t highNorm = 0.7;
+  
+  TFile f("CFs.root", "update");
+
+
+  if(isDataReal) {
+    TString dataNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
+    for(Int_t i = 0; i < 5; i++) {
+      TDirectory *dir = f.GetDirectory(dataNamesReal[i]);
+      MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
+    }
+  } else {
+    TString dataNamesMC[2] = {"mm", "pp"};
+    for(Int_t i = 0; i < 2; i++) {
+      TDirectory *dir = f.GetDirectory(dataNamesMC[i]);
+      MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
+    }
+  }
+  
+  // TDirectory *dir = f.Get("mm1");
+  // MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
+
+  
+
+  
 }
 
-TH1D* MakeACF(TH1D *num, TH1D *den, Int_t rebinNum, Double_t lowNorm, Double_t highNorm)
-{
-  // Make a correlation function out of a single num/den pair
-  num->Sumw2();
-  den->Sumw2();
-  // Rebin the histograms
-  num->Rebin(rebinNum);
-  den->Rebin(rebinNum);
 
-  Double_t numScale = num->Integral(num->FindBin(lowNorm), num->FindBin(highNorm));
-  Double_t denScale = den->Integral(den->FindBin(lowNorm), den->FindBin(highNorm));
 
-  if(numScale > 0) num->Scale(1./numScale);
-  if(denScale > 0) den->Scale(1./denScale);
-
-  TH1D *cf = (TH1D*)num->Clone();
-  cf->Divide(den);
-
-  TString cfName = num->GetName();
-  cfName.ReplaceAll("Num","CF");
-  cf->SetName(cfName);
-  // cout<<"CF Name is:\t"<< cf->GetName()<<endl;
-  cf->SetTitle(cfName);
-  return cf;
-}
-
-TVectorD GetNumCounts(TH1D *num, Double_t lowNorm, Double_t highNorm)
-{
-  Double_t numCounts = num->Integral(num->FindBin(lowNorm), num->FindBin(highNorm));
-  TVectorD count(1);
-  count[0] = numCounts;
-  return count;
-}
 
 void TestMakeCF()
 {
