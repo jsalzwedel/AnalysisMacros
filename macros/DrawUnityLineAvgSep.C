@@ -9,7 +9,7 @@
 #include "TH1D.h"
 #include "TStyle.h"
 
-void DrawUnityLineAvgSep()
+void DrawUnityLineAvgSep(Bool_t isDrawLines)
 {
   TFile f("AvgSep.root");
   TDirectory *dir = (TDirectory*)f.GetDirectory("AvgSepNew");
@@ -56,13 +56,21 @@ void DrawUnityLineAvgSep()
     if(!hist) continue;
 
     hist->SetTitle(titles[iPad-1]);
+    hist->GetXaxis()->SetLabelSize(0.10);
+    hist->GetYaxis()->SetLabelSize(0.10);
+    hist->GetXaxis()->SetNdivisions(303);
+    hist->GetYaxis()->SetNdivisions(303);
+    hist->GetXaxis()->SetTitleSize(0.10); // Just move it off the plot to get it out of the way...
+    hist->GetYaxis()->SetLabelOffset(0.02);
 
-
-    c1->cd(iPad)->SetTopMargin(0.05);
-    c1->cd(iPad)->SetBottomMargin(0.05);
+    c1->cd(iPad);
+    // c1->cd(iPad)->SetTopMargin(0.05);
+    // c1->cd(iPad)->SetBottomMargin(0.05);
     iPad++;
 
     hist->DrawCopy();
+
+    if(!isDrawLines) continue;
     unity->Draw("same");
 
     TLine *l = new TLine(vert[iPad-2], 0.5, vert[iPad-2], 1.5);

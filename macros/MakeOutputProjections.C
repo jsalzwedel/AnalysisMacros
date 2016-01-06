@@ -1,5 +1,5 @@
 
-void TObjArrProject(TObjArray *dir, TFile &outputFile, TString projectionType /*, Int_t centBinLow, Int_t centBinHigh*/)
+void TObjArrProject(TObjArray *dir, TFile &outputFile, TString projectionType2D, TString projectionType3D/*, Int_t centBinLow, Int_t centBinHigh*/)
 {
   TString dirName = dir->GetName();
   
@@ -13,27 +13,45 @@ void TObjArrProject(TObjArray *dir, TFile &outputFile, TString projectionType /*
   TIter next(dir);
   TObject *obj = NULL;
   while( (obj = next()) ) {
+    // TH
+    TH1D *h1 = NULL;    
     TH2F *hist2D = dynamic_cast<TH2F*>(obj);
-    hist2D->SetDirectory(0);
-    if(!hist2D) continue;
-    TH1D *h1 = NULL;
-    if(projectionType == "X"){
-      h1 = hist2D->ProjectionX();
-    } else if(projectionType == "Y") {
-      h1 = hist2D->ProjectionY();
-    } else {
-      cout<<"Bad projection direction input:\t"<<projectionType<<endl;
-      assert(0);
+    TH3F *hist3D = dynamic_cast<TH3F*>(obj);
+    if(hist2D) {
+      hist2D->SetDirectory(0);
+
+      if(projectionType2D == "X"){
+	h1 = hist2D->ProjectionX();
+      } else if(projectionType2D == "Y") {
+	h1 = hist2D->ProjectionY();
+      } else {
+	cout<<"Bad projection direction input:\t"<<projectionType2D<<endl;
+	assert(0);
+      }
+    } else if(hist3D) {
+      hist3D->SetDirectory(0);
+      if(projectionType3D == "X"){
+	h1 = hist3D->ProjectionX();
+      } else if(projectionType3D == "Y") {
+	h1 = hist3D->ProjectionY();
+      } else {
+	cout<<"Bad projection direction input:\t"<<projectionType3D
+	    <<endl;
+	assert(0);
+      }
     }
-     
-    if(!h1) continue;
+    if(!h1) {
+      cout<<"Could not find histogram. Skipping."<<endl;
+      continue;
+    }
     h1->Sumw2();
     h1->SetDirectory(0);
     outDir->cd();
     h1->Write(h1->GetName(), TObject::kOverwrite);
 
-    delete h1; h1 = NULL;
-    delete hist2D; hist2D = NULL;
+    if(h1) delete h1; h1 = NULL;
+    if(hist2D) delete hist2D; hist2D = NULL;
+    if(hist3D) delete hist3D; hist3D = NULL;
 
     // TObjArray *arr = dynamic_cast<TList*>(obj);
     // if (arr) arr->Delete();  // alternatively arr->SetOwner(true);
@@ -44,7 +62,7 @@ void TObjArrProject(TObjArray *dir, TFile &outputFile, TString projectionType /*
 
 
 
-void MakeProjectionsOfDirectories(vector<TString> &dirNames, TString projectionType)
+void MakeProjectionsOfDirectories(vector<TString> &dirNames, TString projectionType2D, TString projectionType3D)
 {
   TString inFileName = "MyOutputAll.root";
   TFile f(inFileName, "read");
@@ -59,7 +77,7 @@ void MakeProjectionsOfDirectories(vector<TString> &dirNames, TString projectionT
     if(!arr) {
       cout<<"Directory for: "<<dirNames[i]<<" does not exist"<<endl;
     } else {
-      TObjArrProject(arr, outFile, projectionType);
+      TObjArrProject(arr, outFile, projectionType2D, projectionType3D);
     }
   }
 
@@ -70,9 +88,11 @@ void MakeMomResProjections()
 {
   vector<TString> dirNames;
   dirNames.push_back("ResolutionLL");
+  dirNames.push_back("ResolutionAA");
   dirNames.push_back("ResolutionLA");
-  TString projectionType = "Y";
-  MakeProjectionsOfDirectories(dirNames, projectionType);
+  TString projectionType2D = "Y";
+  TString projectionType3D = "X";
+  MakeProjectionsOfDirectories(dirNames, projectionType2D, projectionType3D);
 
 }
 
@@ -81,8 +101,9 @@ void MakeAvgSepProjections()
   vector<TString> dirNames;
   dirNames.push_back("AvgSepNew");
   dirNames.push_back("AvgSepOld");
-  TString projectionType = "X";
-  MakeProjectionsOfDirectories(dirNames, projectionType);
+  TString projectionType2D = "X";
+  TString projectionType3D = "X";
+  MakeProjectionsOfDirectories(dirNames, projectionType2D, projectionType3D);
 }
 
 
