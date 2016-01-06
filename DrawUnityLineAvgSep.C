@@ -21,7 +21,7 @@ void DrawUnityLineAvgSep(Bool_t isDrawLines)
   TCanvas *c1 = new TCanvas("AvgSep","AvgSep");
   c1->Divide(5,2,0.0000,0.01);
 
-  TF1 *unity = new TF1("unity","1",0., 20.);
+  TF1 *unity = new TF1("unity","1",0., 40.);
   unity->SetLineColor(kBlack);
 
   TString titles[] = {"p p",
@@ -57,9 +57,9 @@ void DrawUnityLineAvgSep(Bool_t isDrawLines)
 
     hist->SetTitle(titles[iPad-1]);
     hist->GetXaxis()->SetLabelSize(0.10);
-    hist->GetYaxis()->SetLabelSize(0.10);
-    hist->GetXaxis()->SetNdivisions(303);
-    hist->GetYaxis()->SetNdivisions(303);
+    hist->GetYaxis()->SetLabelSize(0.075);
+    hist->GetXaxis()->SetNdivisions(304);
+    hist->GetYaxis()->SetNdivisions(304);
     hist->GetXaxis()->SetTitleSize(0.10); // Just move it off the plot to get it out of the way...
     hist->GetYaxis()->SetLabelOffset(0.02);
 
