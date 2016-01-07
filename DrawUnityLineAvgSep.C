@@ -9,7 +9,7 @@
 #include "TH1D.h"
 #include "TStyle.h"
 
-void DrawUnityLineAvgSep(Bool_t isDrawLines)
+void DrawUnityLineAvgSep(Bool_t isDrawLines = kTRUE)
 {
   TFile f("AvgSep.root");
   TDirectory *dir = (TDirectory*)f.GetDirectory("AvgSepNew");
