@@ -35,14 +35,14 @@ TH1D *MakeCFFromNum(TDirectory *dir, TH1D *num)
   Int_t lowBin = num->FindBin(lowVal);
   Int_t highBin = num->FindBin(highVal);
 
-  cout<<"LowBin:\t"<<lowBin<<".\tHighBin:\t"<<highBin<<endl;
+  // cout<<"LowBin:\t"<<lowBin<<".\tHighBin:\t"<<highBin<<endl;
 
   
   Double_t numScale = num->Integral(lowBin, highBin);
   Double_t denScale = den->Integral(lowBin, highBin);
 
-  cout<<"Num Scale:\t"<< numScale << ".\tDen Scale:\t"<<denScale
-      <<".\tRatio:\t" << numScale/denScale <<endl;
+  // cout<<"Num Scale:\t"<< numScale << ".\tDen Scale:\t"<<denScale
+  //     <<".\tRatio:\t" << numScale/denScale <<endl;
   
   num->Scale(1./numScale);
   den->Scale(1./denScale);
@@ -50,8 +50,8 @@ TH1D *MakeCFFromNum(TDirectory *dir, TH1D *num)
   Double_t numScaleNew = num->Integral(lowBin, highBin);
   Double_t denScaleNew = den->Integral(lowBin, highBin);
 
-    cout<<"new Scale:\t"<< numScaleNew << ".\tDen Scale:\t"<<denScaleNew
-      <<".\tRatio:\t" << numScaleNew/denScaleNew <<endl;
+  // cout<<"new Scale:\t"<< numScaleNew << ".\tDen Scale:\t"<<denScaleNew
+  //     <<".\tRatio:\t" << numScaleNew/denScaleNew <<endl;
 
   
   TH1D *cf = (TH1D*)num->Clone();
@@ -63,7 +63,7 @@ TH1D *MakeCFFromNum(TDirectory *dir, TH1D *num)
   cf->SetName(cfName);
   cf->SetTitle(cfName);
 
-  cf->SetAxisRange(0.75, 1.5, "Y");
+  cf->SetAxisRange(0.5, 1.5, "Y");
 
   return cf;
 }
