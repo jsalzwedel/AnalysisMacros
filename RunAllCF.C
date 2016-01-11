@@ -1,6 +1,7 @@
 #include "MakeOutputProjections.C"
 #include "MakeCFs.C"
 #include "MakeCombinedCFs.C"
+#include "RebinNumDen.C"
 
 
 
@@ -20,4 +21,8 @@ void RunAllCF(Bool_t isDataReal)
 
   // Combine together LL and AA
   CombineLLAA();
+
+  // Rebin the numerator and denominator distributions
+  // for use with log fitting
+  RebinNumDen();
 }
