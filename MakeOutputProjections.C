@@ -1,3 +1,5 @@
+#include <vector>
+
 
 void TObjArrProject(TObjArray *dir, TFile &outputFile, TString projectionType2D, TString projectionType3D, Double_t lowProjAxis1 = -1., Double_t highProjAxis1 = -1., Double_t lowProjAxis2 = -1., Double_t highProjAxis2 = -1./*, Int_t centBinLow, Int_t centBinHigh*/)
 {
@@ -145,10 +147,10 @@ void MakeAvgSepProjections()
   dirNames.push_back("AvgSepOld");
   TString projectionType2D = "X";
   TString projectionType3D = "X";
-  Double_t lowProjAxisY = 0.6; // use negative 1 for no limit
-  Double_t highProjAxisY = 2.0;
-  Double_t lowProjAxisZ = 0.6;
-  Double_t highProjAxisZ = 2.;
+  Double_t lowProjAxisY = -1.; // use negative 1 for no limit
+  Double_t highProjAxisY = -1.;
+  Double_t lowProjAxisZ = -1.;
+  Double_t highProjAxisZ = -1.;
   MakeProjectionsOfDirectories(dirNames, projectionType2D, projectionType3D, lowProjAxisY, highProjAxisY, lowProjAxisZ, highProjAxisZ);
 }
 
