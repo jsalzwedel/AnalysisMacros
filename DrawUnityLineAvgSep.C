@@ -35,16 +35,16 @@ void DrawUnityLineAvgSep(Bool_t isDrawLines = kTRUE)
 		      "p #bar{p}",
 		      "#pi- #pi+"};
 
-  Double_t vert[] = {8, // pp
-		     12, // pi- pi-
-		     8, // pbar pbar
-		     12,// pi+ pi+
-		     16,// pbar pi-
-		     16,// p pi+
-		     16,// p pi-
-		     16,// pbar p+
-		     14,// p pbar
-		     16};// pi- pi+
+  Double_t vert[] = {12, // pp
+		     10, // pi- pi-
+		     12, // pbar pbar
+		     10,// pi+ pi+
+		     10,// pbar pi-
+		     10,// p pi+
+		     15,// p pi-
+		     15,// pbar pi+
+		     10,// p pbar
+		     25};// pi- pi+
 		      
   gStyle->SetTitleSize(0.2,"t");
   Int_t iPad = 1;
