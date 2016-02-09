@@ -32,7 +32,7 @@ void FitWithConstant(TH1D* h1, TFile *out)
   Int_t binLow = h1->FindBin(fitRangeLow);
   Int_t binHigh = h1->FindBin(fitRangeHigh);
   cout<<"\t\t********************Fitting with a constant value********************"<<endl<<endl;;
-  h1->Fit(f);
+  h1->Fit(f, "R0");
 
   TString fitName = h1->GetName();
   fitName += "Fit";
@@ -85,10 +85,10 @@ void RebinHist(TH1D* h1, TFile *out)
 void ManuallyRebin(TH1D* h1, TFile *out)
 {
   cout<<"Taking weighted average"<<endl;
-  Int_t nRebin = 40; // Merge 100 bins into 1
+  Int_t nCombine = 40; // Merge 100 bins into 1
 
   Int_t totalBins = h1->GetNbinsX();
-  Int_t finalBins = totalBins/nRebin;
+  Int_t finalBins = totalBins/nCombine;
   cout<<"Final N bins:\t"<<finalBins<<endl;
   TString newName = h1->GetName();
   newName += "WgtAvg";
@@ -102,9 +102,9 @@ void ManuallyRebin(TH1D* h1, TFile *out)
     Double_t weightedSum = 0.;
     Double_t weights = 0.;
     
-    for(Int_t iOldBin = 1; iOldBin < nRebin+1; iOldBin++)
+    for(Int_t iOldBin = 1; iOldBin < nCombine+1; iOldBin++)
     {
-      Int_t binNum = iNewBin * nRebin + iOldBin;
+      Int_t binNum = iNewBin * nCombine + iOldBin;
       Double_t errorSq = pow(h1->GetBinError(binNum), 2.);
       Double_t content = h1->GetBinContent(binNum);
 
