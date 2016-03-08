@@ -281,25 +281,8 @@ void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString p
   // if(den3D) {delete den3D; den3D = NULL;}
 }
 
-
-
-void MakeCFProjectionForDataSet(TString dataName)
+void RunOverTList(TList *list, TString dataName)
 {
-  // Make all the numerator and denominator projections for one data set
-  // and save them to a root file in their own directory.
-
-  // TString dataName = "mm1";
-  TString inFileName = "MyOutput" + dataName + ".root";
-  TFile inFile(inFileName,"read");
-  if (inFile.IsZombie()) {
-    cout << "Error opening file " << inFileName << endl;
-    return;
-  }
-
-  
-  TList *list = (TList*)inFile.Get("MyList");
-  
-  
 
   TFile outFile("CFs.root", "update");
   // Setup dataset directory
@@ -326,22 +309,78 @@ void MakeCFProjectionForDataSet(TString dataName)
     SaveNumsDens(outDirNum, outDirDen, list, pairTypes[i]);
   }
 
+}
+
+
+void MakeCFProjectionForDataSet(TString dataName, Bool_t isTrainResult)
+{
+  // Make all the numerator and denominator projections for one data set
+  // and save them to a root file in their own directory.
+
+
+  // Generate the file name and open the file
+  TString inFileName;
+  if(isTrainResult) {
+    inFileName = "AnalysisResults" + dataName + ".root";
+  } else {
+    inFileName = "MyOutput" + dataName + ".root";
+  }
+  TFile inFile(inFileName,"read");
+  if (inFile.IsZombie()) {
+    cout << "Error opening file " << inFileName << endl;
+    return;
+  }
+
+  // Get the output TList (or TLists in the case of train results)
+  vector<TList*> inputLists;
+  // TList *list;
+  if(!isTrainResult) {
+    // list = (TList*)inFile.Get("MyList");
+    inputLists.push_back((TList*)inFile.Get("MyList"));
+  } else {
+    TDirectory *dir = inFile.GetDirectory("Results");
+
+    // Iterate over contents of directory and get all the TLists
+    TIter nextkey(dir->GetListOfKeys());
+    TKey *key;
+    while ((key = (TKey*)nextkey())){
+      TList *list = dynamic_cast<TList*>(key->ReadObj());
+      if(!list) continue;
+      inputLists.push_back(list);
+    }
+  }
+
+  for(UInt_t iList = 0; iList < inputLists.size(); iList++) {
+
+    TString outputDataName;
+    if(isTrainResult) {
+      TString listName = inputLists[iList]->GetName();
+      if(listName.Contains("MyList")) {
+	// Remove the "MyList" characters
+	TString subName = listName.Remove(0,6);
+	outputDataName += subName;
+      }
+    }
+    outputDataName += dataName;
+    cout<<"Projecting out "<<outputDataName<<endl;
+    RunOverTList(inputLists[iList], outputDataName);
+  }
   // Now do CF stuff? Probably in separate function.  Get and save counts, make cfs
 }
 
 
 
-void MakeCFProjections(Bool_t isDataCompact)
+void MakeCFProjections(Bool_t isDataCompact, Bool_t isTrainResult)
 {
   if(!isDataCompact) {
     TString dataNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
     for(Int_t i = 0; i < 5; i++) {
-      MakeCFProjectionForDataSet(dataNamesReal[i]);
+      MakeCFProjectionForDataSet(dataNamesReal[i], isTrainResult);
     }
   } else {
     TString dataNamesMC[2] = {"mm", "pp"};
     for(Int_t i = 0; i < 2; i++) {
-      MakeCFProjectionForDataSet(dataNamesMC[i]);
+      MakeCFProjectionForDataSet(dataNamesMC[i], isTrainResult);
     }
   }
 }
