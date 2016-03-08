@@ -331,9 +331,9 @@ void MakeCFProjectionForDataSet(TString dataName)
 
 
 
-void MakeCFProjections(Bool_t isDataReal)
+void MakeCFProjections(Bool_t isDataCompact)
 {
-  if(isDataReal) {
+  if(!isDataCompact) {
     TString dataNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
     for(Int_t i = 0; i < 5; i++) {
       MakeCFProjectionForDataSet(dataNamesReal[i]);
