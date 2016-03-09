@@ -124,7 +124,7 @@ void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm,
 
 
 
-void MakeCFs(Bool_t isDataReal)
+void MakeCFs(Bool_t isDataCompact)
 {
   // Merge between datasets, then merge centralities
   Int_t rebinNumber = 4;
@@ -134,7 +134,7 @@ void MakeCFs(Bool_t isDataReal)
   TFile f("CFs.root", "update");
 
 
-  if(isDataReal) {
+  if(!isDataCompact) {
     TString dataNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
     for(Int_t i = 0; i < 5; i++) {
       TDirectory *dir = f.GetDirectory(dataNamesReal[i]);
