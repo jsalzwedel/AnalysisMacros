@@ -198,12 +198,10 @@ TString Get1DHistNameSuffix(Int_t lowBin, Int_t highBin, TString pairType)
 
 
 
-TH1D* ProjectCentralityBin(TH3F* h3D, Int_t centLow, Int_t centHigh, TString pairType)
+TH1D* ProjectCentralityBin(TH3F* h3D, Int_t centLow, Int_t centHigh, TString pairType, Int_t varBinLow = 1, Int_t varBinHigh = 1)
 {
 
   // Assume only one "variable cut" bin
-  Int_t varBinLow = 1;
-  Int_t varBinHigh = 1;
   TString name1D = Get1DHistNameSuffix(centLow, centHigh, pairType);
   TH1D *h1D = h3D->ProjectionZ(name1D, varBinLow,varBinHigh, centLow, centHigh);
   // h1D->SetTitle(Get1DHistNameSuffix(centLow, centHigh, pairType));
@@ -228,82 +226,118 @@ void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString p
     if(den3D) {delete den3D; den3D = NULL;}
     return;
   }
-  
 
-  // Loop over the centrality bins
-  for(Int_t i = 1; i < 21; i++) {
-    TH1D *num1D = ProjectCentralityBin(num3D, i, i, pairType);
-    if(!num1D) {
-      cout<<"Centrality bin "<<i*5<<" does not have the needed projections"<<endl;
-      if(num1D) {delete num1D; num1D = NULL;}
-      // if(den1D) {delete den1D; den1D = NULL;}
-      continue;
+  //Figure out how many histogram bins there are for different cut values
+  Int_t nCutBins = num3D->GetNbinsX();
+  assert(nCutBins == den3D->GetNbinsX());
+
+
+  // Loop over the cut bins
+  for(Int_t iCut = 1; iCut < nCutBins + 1; iCut++) {
+
+    TString cutDirName = "Cut";
+    cutDirName += iCut;
+    TDirectory *cutNumDir = numDir->GetDirectory(cutDirName);
+    if(!cutNumDir) {
+      cutNumDir = numDir->mkdir(cutDirName);
     }
+    TDirectory *cutDenDir = denDir->GetDirectory(cutDirName);
+    if(!cutDenDir) {
+      cutDenDir = denDir->mkdir(cutDirName);
+    }
+
+
+
+    // Loop over the centrality bins
+    for(Int_t iCent = 1; iCent < 21; iCent++) {
+      TH1D *num1D = ProjectCentralityBin(num3D, iCent, iCent, pairType, iCut, iCut);
+      if(!num1D) {
+	cout<<"Centrality bin "<<iCent*5<<" does not have the needed projections"<<endl;
+	if(num1D) {delete num1D; num1D = NULL;}
+	// if(den1D) {delete den1D; den1D = NULL;}
+	continue;
+      }
     
-    TString numName = "Num";
-    TString currentNameNum = num1D->GetName();
-    numName += currentNameNum;
-    num1D->SetTitle(numName);
-    num1D->SetName(numName);
-    num1D->SetDirectory(0);
-    numDir->cd();
-    num1D->Write(numName, TObject::kOverwrite);
+      TString numName = "Num";
+      TString currentNameNum = num1D->GetName();
+      numName += currentNameNum;
+      num1D->SetTitle(numName);
+      num1D->SetName(numName);
+      num1D->SetDirectory(0);
+      cutNumDir->cd();
+      num1D->Write(numName, TObject::kOverwrite);
 
-    cout<<"Wrote "<<numName<<" to "<<num1D->GetName()<<endl;
+      cout<<"Wrote "<<numName<<" to "<<num1D->GetName()<<endl;
 
-    TH1D *den1D = ProjectCentralityBin(den3D, i, i, pairType);
-    if(!den1D) {
-      cout<<"Centrality bin "<<i*5<<" does not have the needed projections"<<endl;
-      if(num1D) {delete num1D; num1D = NULL;}
-      if(den1D) {delete den1D; den1D = NULL;}
-      continue;
+      TH1D *den1D = ProjectCentralityBin(den3D, iCent, iCent, pairType, iCut, iCut);
+      if(!den1D) {
+	cout<<"Centrality bin "<<iCent*5<<" does not have the needed projections"<<endl;
+	if(num1D) {delete num1D; num1D = NULL;}
+	if(den1D) {delete den1D; den1D = NULL;}
+	continue;
+      }
+      TString denName = "Den";
+      TString currentNameDen =  den1D->GetName();
+      // cout<<currentNameDen<<endl;
+      denName += currentNameDen;
+      // cout<<numName<<"\t"<<denName<<endl;
+      den1D->SetTitle(denName);
+      den1D->SetName(denName);
+      den1D->SetDirectory(0);
+      cutDenDir->cd();
+      den1D->Write(denName, TObject::kOverwrite);
+      // cout<<"Num:\t"<<num1D->GetName()<<"\tDen:\t"<<den1D->GetName()<<endl;
+      cout<<"Wrote "<<denName<<" to "<<den1D->GetName()<<endl;
+
+
+      //   cout<<"About to delete 1D hists"<<endl;
+      //   if(num1D) {delete num1D; num1D = NULL;}
+      //   if(den1D) {delete den1D; den1D = NULL;}
     }
-    TString denName = "Den";
-    TString currentNameDen =  den1D->GetName();
-    // cout<<currentNameDen<<endl;
-    denName += currentNameDen;
-    // cout<<numName<<"\t"<<denName<<endl;
-    den1D->SetTitle(denName);
-    den1D->SetName(denName);
-    den1D->SetDirectory(0);
-    denDir->cd();
-    den1D->Write(denName, TObject::kOverwrite);
-    // cout<<"Num:\t"<<num1D->GetName()<<"\tDen:\t"<<den1D->GetName()<<endl;
-    cout<<"Wrote "<<denName<<" to "<<den1D->GetName()<<endl;
-
-
-  //   cout<<"About to delete 1D hists"<<endl;
-  //   if(num1D) {delete num1D; num1D = NULL;}
-  //   if(den1D) {delete den1D; den1D = NULL;}
   }
   
   // if(num3D) {delete num3D; num3D = NULL;}
   // if(den3D) {delete den3D; den3D = NULL;}
 }
 
-void RunOverTList(TList *list, TString dataName)
+void RunOverTList(TList *list, TString dataName, TString fieldName)
 {
 
   TFile outFile("CFs.root", "update");
-  // Setup dataset directory
-  TString outDirName = dataName;
-  TDirectory *outDir = outFile.GetDirectory(outDirName);
-  if(!outDir) {
-    outDir = outFile.mkdir(outDirName);
+  
+  // Setup dataset and field directories
+  // If no special name for dataset, just make a directory for the field type
+  TDirectory *dataDir = NULL;
+  if(!dataName.IsNull()) { 
+    dataDir = outFile.GetDirectory(dataName);
+    if(!dataDir) {
+      dataDir = outFile.mkdir(dataName);
+    }
   }
+  TDirectory *fieldDir = NULL;
+  if(!dataName.IsNull()) { 
+    fieldDir = dataDir->GetDirectory(fieldName);
+    if(!fieldDir) {
+      fieldDir = dataDir->mkdir(fieldName);
+    }
+  } else {
+    fieldDir = outFile.GetDirectory(fieldName);
+        if(!fieldDir) {
+      fieldDir = outFile.mkdir(fieldName);
+    }
+  }
+  
   // Setup subdirectories
-  TDirectory *outDirNum = outDir->GetDirectory("Num");
+  TDirectory *outDirNum = fieldDir->GetDirectory("Num");
   if(!outDirNum) {
-    outDirNum = outDir->mkdir("Num");
+    outDirNum = fieldDir->mkdir("Num");
   }
-  TDirectory *outDirDen = outDir->GetDirectory("Den");
+  TDirectory *outDirDen = fieldDir->GetDirectory("Den");
   if(!outDirDen) {
-    outDirDen = outDir->mkdir("Den");
+    outDirDen = fieldDir->mkdir("Den");
   }
-  // TDirectory *outDirCF = outDir.GetDirectory("CF");
-  // if(!outDirCF) {
-  //   outDirCF = outDir.mkdir("CF");
-  // }
+
+  // Now project nums and dens for each pair type
   TString pairTypes[3] = {"LamLam", "ALamALam", "LamALam"};
   for(Int_t i = 0; i < 3; i++) {
     SaveNumsDens(outDirNum, outDirDen, list, pairTypes[i]);
@@ -312,7 +346,7 @@ void RunOverTList(TList *list, TString dataName)
 }
 
 
-void MakeCFProjectionForDataSet(TString dataName, Bool_t isTrainResult)
+void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
 {
   // Make all the numerator and denominator projections for one data set
   // and save them to a root file in their own directory.
@@ -321,9 +355,9 @@ void MakeCFProjectionForDataSet(TString dataName, Bool_t isTrainResult)
   // Generate the file name and open the file
   TString inFileName;
   if(isTrainResult) {
-    inFileName = "AnalysisResults" + dataName + ".root";
+    inFileName = "AnalysisResults" + fieldName + ".root";
   } else {
-    inFileName = "MyOutput" + dataName + ".root";
+    inFileName = "MyOutput" + fieldName + ".root";
   }
   TFile inFile(inFileName,"read");
   if (inFile.IsZombie()) {
@@ -361,9 +395,8 @@ void MakeCFProjectionForDataSet(TString dataName, Bool_t isTrainResult)
 	outputDataName += subName;
       }
     }
-    outputDataName += dataName;
-    cout<<"Projecting out "<<outputDataName<<endl;
-    RunOverTList(inputLists[iList], outputDataName);
+    cout<<"Projecting out "<<outputDataName<<" for "<<fieldName<<endl;
+    RunOverTList(inputLists[iList], outputDataName, fieldName);
   }
   // Now do CF stuff? Probably in separate function.  Get and save counts, make cfs
 }
@@ -373,14 +406,14 @@ void MakeCFProjectionForDataSet(TString dataName, Bool_t isTrainResult)
 void MakeCFProjections(Bool_t isDataCompact, Bool_t isTrainResult)
 {
   if(!isDataCompact) {
-    TString dataNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
+    TString fieldNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
     for(Int_t i = 0; i < 5; i++) {
-      MakeCFProjectionForDataSet(dataNamesReal[i], isTrainResult);
+      MakeCFProjectionForDataSet(fieldNamesReal[i], isTrainResult);
     }
   } else {
-    TString dataNamesMC[2] = {"mm", "pp"};
+    TString fieldNamesMC[2] = {"mm", "pp"};
     for(Int_t i = 0; i < 2; i++) {
-      MakeCFProjectionForDataSet(dataNamesMC[i], isTrainResult);
+      MakeCFProjectionForDataSet(fieldNamesMC[i], isTrainResult);
     }
   }
 }
