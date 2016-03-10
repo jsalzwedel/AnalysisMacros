@@ -247,7 +247,6 @@ void SaveNumsDens(TDirectory *dataDir, TString fieldName, TH3F *num3D, TH3F* den
       if(!num1D) {
 	cout<<"Centrality bin "<<iCent*5<<" does not have the needed projections"<<endl;
 	if(num1D) {delete num1D; num1D = NULL;}
-	// if(den1D) {delete den1D; den1D = NULL;}
 	continue;
       }
     
@@ -271,26 +270,15 @@ void SaveNumsDens(TDirectory *dataDir, TString fieldName, TH3F *num3D, TH3F* den
       }
       TString denName = "Den";
       TString currentNameDen =  den1D->GetName();
-      // cout<<currentNameDen<<endl;
       denName += currentNameDen;
-      // cout<<numName<<"\t"<<denName<<endl;
       den1D->SetTitle(denName);
       den1D->SetName(denName);
       den1D->SetDirectory(0);
       denDir->cd();
       den1D->Write(denName, TObject::kOverwrite);
-      // cout<<"Num:\t"<<num1D->GetName()<<"\tDen:\t"<<den1D->GetName()<<endl;
       cout<<"Wrote "<<denName<<" to "<<den1D->GetName()<<endl;
-
-
-      //   cout<<"About to delete 1D hists"<<endl;
-      //   if(num1D) {delete num1D; num1D = NULL;}
-      //   if(den1D) {delete den1D; den1D = NULL;}
     }
   }
-  
-  // if(num3D) {delete num3D; num3D = NULL;}
-  // if(den3D) {delete den3D; den3D = NULL;}
 }
 
 void RunOverTList(TList *list, TString dataName, TString fieldName)
@@ -329,7 +317,6 @@ void RunOverTList(TList *list, TString dataName, TString fieldName)
     }
     SaveNumsDens(dataDir, fieldName, num3D, den3D, pairTypes[i]);
   }
-
 }
 
 
