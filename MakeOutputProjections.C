@@ -209,7 +209,7 @@ TH1D* ProjectCentralityBin(TH3F* h3D, Int_t centLow, Int_t centHigh, TString pai
   return h1D;
 }
 
-void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString pairType)
+void SaveNumsDens(/*TDirectory *numDir, TDirectory *denDir,*/ TDirectory *dataDir, TString fieldName, TList *list, TString pairType)
 {
   // Save numerator and denominator distributions
   TH3F *num3D = (TH3F*) list->FindObject("fSignal" + pairType);
@@ -231,22 +231,28 @@ void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString p
   Int_t nCutBins = num3D->GetNbinsX();
   assert(nCutBins == den3D->GetNbinsX());
 
-
   // Loop over the cut bins
   for(Int_t iCut = 1; iCut < nCutBins + 1; iCut++) {
 
+    // Setup/open directories
     TString cutDirName = "Cut";
     cutDirName += iCut;
-    TDirectory *cutNumDir = numDir->GetDirectory(cutDirName);
-    if(!cutNumDir) {
-      cutNumDir = numDir->mkdir(cutDirName);
+    TDirectory *cutDir = dataDir->GetDirectory(cutDirName);
+    if(!cutDir) {
+      cutDir = dataDir->mkdir(cutDirName);
     }
-    TDirectory *cutDenDir = denDir->GetDirectory(cutDirName);
-    if(!cutDenDir) {
-      cutDenDir = denDir->mkdir(cutDirName);
+    TDirectory *fieldDir = cutDir->GetDirectory(fieldName);
+    if(!fieldDir) {
+      fieldDir = cutDir->mkdir(fieldName);
     }
-
-
+    TDirectory *numDir = fieldDir->GetDirectory("Num");
+    if(!numDir) {
+      numDir = fieldDir->mkdir("Num");
+    }
+    TDirectory *denDir = fieldDir->GetDirectory("Den");
+    if(!denDir) {
+      denDir = fieldDir->mkdir("Den");
+    }
 
     // Loop over the centrality bins
     for(Int_t iCent = 1; iCent < 21; iCent++) {
@@ -264,7 +270,7 @@ void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString p
       num1D->SetTitle(numName);
       num1D->SetName(numName);
       num1D->SetDirectory(0);
-      cutNumDir->cd();
+      numDir->cd();
       num1D->Write(numName, TObject::kOverwrite);
 
       cout<<"Wrote "<<numName<<" to "<<num1D->GetName()<<endl;
@@ -284,7 +290,7 @@ void SaveNumsDens(TDirectory *numDir, TDirectory *denDir, TList *list, TString p
       den1D->SetTitle(denName);
       den1D->SetName(denName);
       den1D->SetDirectory(0);
-      cutDenDir->cd();
+      denDir->cd();
       den1D->Write(denName, TObject::kOverwrite);
       // cout<<"Num:\t"<<num1D->GetName()<<"\tDen:\t"<<den1D->GetName()<<endl;
       cout<<"Wrote "<<denName<<" to "<<den1D->GetName()<<endl;
@@ -313,34 +319,15 @@ void RunOverTList(TList *list, TString dataName, TString fieldName)
     if(!dataDir) {
       dataDir = outFile.mkdir(dataName);
     }
-  }
-  TDirectory *fieldDir = NULL;
-  if(!dataName.IsNull()) { 
-    fieldDir = dataDir->GetDirectory(fieldName);
-    if(!fieldDir) {
-      fieldDir = dataDir->mkdir(fieldName);
-    }
   } else {
-    fieldDir = outFile.GetDirectory(fieldName);
-        if(!fieldDir) {
-      fieldDir = outFile.mkdir(fieldName);
-    }
+    dataDir = &outFile;
   }
-  
-  // Setup subdirectories
-  TDirectory *outDirNum = fieldDir->GetDirectory("Num");
-  if(!outDirNum) {
-    outDirNum = fieldDir->mkdir("Num");
-  }
-  TDirectory *outDirDen = fieldDir->GetDirectory("Den");
-  if(!outDirDen) {
-    outDirDen = fieldDir->mkdir("Den");
-  }
+
 
   // Now project nums and dens for each pair type
   TString pairTypes[3] = {"LamLam", "ALamALam", "LamALam"};
   for(Int_t i = 0; i < 3; i++) {
-    SaveNumsDens(outDirNum, outDirDen, list, pairTypes[i]);
+    SaveNumsDens(dataDir, fieldName, list, pairTypes[i]);
   }
 
 }
