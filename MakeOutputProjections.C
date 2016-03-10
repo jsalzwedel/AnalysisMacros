@@ -209,23 +209,10 @@ TH1D* ProjectCentralityBin(TH3F* h3D, Int_t centLow, Int_t centHigh, TString pai
   return h1D;
 }
 
-void SaveNumsDens(/*TDirectory *numDir, TDirectory *denDir,*/ TDirectory *dataDir, TString fieldName, TList *list, TString pairType)
+void SaveNumsDens(TDirectory *dataDir, TString fieldName, TH3F *num3D, TH3F* den3D, TString pairType)
 {
   // Save numerator and denominator distributions
-  TH3F *num3D = (TH3F*) list->FindObject("fSignal" + pairType);
-  TH3F *den3D = (TH3F*) list->FindObject("fBkg" + pairType);
-  if(!num3D) {
-    cout<<"Could not find 3D Num!"<<endl;
-    if(num3D) {delete num3D; num3D = NULL;}
-    if(den3D) {delete den3D; den3D = NULL;}
-    return;
-  }
-  if(!den3D) {
-    cout<<"Could not find 3D Den!"<<endl;
-    if(num3D) {delete num3D; num3D = NULL;}
-    if(den3D) {delete den3D; den3D = NULL;}
-    return;
-  }
+
 
   //Figure out how many histogram bins there are for different cut values
   Int_t nCutBins = num3D->GetNbinsX();
@@ -311,8 +298,7 @@ void RunOverTList(TList *list, TString dataName, TString fieldName)
 
   TFile outFile("CFs.root", "update");
   
-  // Setup dataset and field directories
-  // If no special name for dataset, just make a directory for the field type
+  // Setup dataset directory
   TDirectory *dataDir = NULL;
   if(!dataName.IsNull()) { 
     dataDir = outFile.GetDirectory(dataName);
@@ -327,7 +313,21 @@ void RunOverTList(TList *list, TString dataName, TString fieldName)
   // Now project nums and dens for each pair type
   TString pairTypes[3] = {"LamLam", "ALamALam", "LamALam"};
   for(Int_t i = 0; i < 3; i++) {
-    SaveNumsDens(dataDir, fieldName, list, pairTypes[i]);
+    TH3F *num3D = (TH3F*) list->FindObject("fSignal" + pairTypes[i]);
+    TH3F *den3D = (TH3F*) list->FindObject("fBkg" + pairTypes[i]);
+    if(!num3D) {
+      cout<<"Could not find 3D Num!"<<endl;
+      if(num3D) {delete num3D; num3D = NULL;}
+      if(den3D) {delete den3D; den3D = NULL;}
+      return;
+    }
+    if(!den3D) {
+      cout<<"Could not find 3D Den!"<<endl;
+      if(num3D) {delete num3D; num3D = NULL;}
+      if(den3D) {delete den3D; den3D = NULL;}
+      return;
+    }
+    SaveNumsDens(dataDir, fieldName, num3D, den3D, pairTypes[i]);
   }
 
 }
