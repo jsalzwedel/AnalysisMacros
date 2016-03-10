@@ -124,7 +124,7 @@ void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm,
 
 
 
-void MakeCFs(Bool_t isDataCompact)
+void MakeCFs(Bool_t isDataCompact, Bool_t isTrainResult)
 {
   // Merge between datasets, then merge centralities
   Int_t rebinNumber = 4;
@@ -133,19 +133,27 @@ void MakeCFs(Bool_t isDataCompact)
   
   TFile f("CFs.root", "update");
 
+  // if(isTrainResult) {
+  //   // Get all the the directories and find their subdirectories
+  //   TList *dirList = f.GetListOfKeys();
+  //   TIter dirIter(dirList);
+  //   TKey 
 
+  // }
+
+  vector<TString> dataNames;
   if(!isDataCompact) {
-    TString dataNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
-    for(Int_t i = 0; i < 5; i++) {
-      TDirectory *dir = f.GetDirectory(dataNamesReal[i]);
-      MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
-    }
+    TString dataNamesArr[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
+    dataNames.assign(dataNamesArr, dataNamesArr+5);
   } else {
-    TString dataNamesMC[2] = {"mm", "pp"};
-    for(Int_t i = 0; i < 2; i++) {
-      TDirectory *dir = f.GetDirectory(dataNamesMC[i]);
-      MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
-    }
+    TString dataNamesArr[2] = {"mm", "pp"};
+    dataNames.assign(dataNamesArr, dataNamesArr+2);
+  }
+
+  //Now make the CFs
+  for(UInt_t iName = 0; iName < dataNames.size(); iName++) {
+    TDirectory *dir = f.GetDirectory(dataNames[i]);
+    MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
   }
 }
 
