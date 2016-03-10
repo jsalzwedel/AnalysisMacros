@@ -277,6 +277,9 @@ void SaveNumsDens(TDirectory *dataDir, TString fieldName, TH3F *num3D, TH3F* den
       denDir->cd();
       den1D->Write(denName, TObject::kOverwrite);
       cout<<"Wrote "<<denName<<" to "<<den1D->GetName()<<endl;
+
+      if(num1D) {delete num1D; num1D = NULL;}
+      if(den1D) {delete den1D; den1D = NULL;}
     }
   }
 }
@@ -359,7 +362,6 @@ void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
   }
 
   for(UInt_t iList = 0; iList < inputLists.size(); iList++) {
-
     TString outputDataName;
     if(isTrainResult) {
       TString listName = inputLists[iList]->GetName();
@@ -371,6 +373,12 @@ void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
     }
     cout<<"Projecting out "<<outputDataName<<" for "<<fieldName<<endl;
     RunOverTList(inputLists[iList], outputDataName, fieldName);
+
+    // Clean up
+    if(inputLists[iList]) {
+      delete inputLists[iList];
+      inputLists[iList] = NULL;
+    }
   }
   // Now do CF stuff? Probably in separate function.  Get and save counts, make cfs
 }
