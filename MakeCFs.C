@@ -147,13 +147,6 @@ void MakeCFs(Bool_t isDataCompact)
       MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
     }
   }
-  
-  // TDirectory *dir = f.Get("mm1");
-  // MakeCFsForDataset(dir, rebinNumber, lowNorm, highNorm);
-
-  
-
-  
 }
 
 
