@@ -19,11 +19,12 @@
 #include "TVectorD.h"
 #include "TKey.h"
 
+#include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/GetDataDirectories.C"
 
 using namespace std;
 
 
-vector<TDirectory*> GetDirectories(TFile &f, vector<TString> dataSetNames, TString dirName)
+vector<TDirectory*> GetDirectories(TDirectory *f, vector<TString> dataSetNames, TString dirName)
 {
   vector<TDirectory*> dirs;
   // if(dataSetNames.size() < 2) {
@@ -33,9 +34,9 @@ vector<TDirectory*> GetDirectories(TFile &f, vector<TString> dataSetNames, TStri
   UInt_t nDirs = dataSetNames.size();
 
   for(UInt_t i = 0; i < nDirs; i++) {
-    // TDirectory *dir = (TDirectory*) f.Get(dataSetNames[i]);
+    // TDirectory *dir = (TDirectory*) f->Get(dataSetNames[i]);
     TString fullDirName = dataSetNames[i] + "/" + dirName;
-    TDirectory *dir = (TDirectory*) f.Get(fullDirName);
+    TDirectory *dir = (TDirectory*) f->Get(fullDirName);
     assert(dir);
     dirs.push_back(dir);
   }
@@ -75,31 +76,15 @@ TH1D *CombineCFs(vector<TH1D*> cfs, vector<Double_t> counts)
   return combinedCF;
 }
 
-
-void MakeCombinedCFs(Bool_t isDataCompact, Bool_t isTrainResult)
+void CombineCFsInDataDir(TDirectory *f, vector<TString> dataSetNames)
 {
-  cout<<"Making combined cfs"<<endl;
-
-  // Get the directories for the cfs and counts
-  TFile f("CFs.root", "update");
-
-  vector<TString> dataSetNames;
-  if(!isDataCompact) {
-    TString dataSetNamesArr[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
-    dataSetNames.assign(dataSetNamesArr, dataSetNamesArr+5);
-  } else {
-    TString dataSetNamesArr[2] = {"mm", "pp"};
-    dataSetNames.assign(dataSetNamesArr, dataSetNamesArr+2);
-  }
-
   TString cfDirName = "CF";
   TString countDirName = "Count";
-  TFile f("CFs.root","update");
   vector<TDirectory*> cfDirs = GetDirectories(f, dataSetNames, cfDirName);
   vector<TDirectory*> countDirs = GetDirectories(f, dataSetNames, countDirName);
-  TDirectory *mergeDir = (TDirectory*)f.GetDirectory("Merged");
+  TDirectory *mergeDir = (TDirectory*)f->GetDirectory("Merged");
   if(!mergeDir) {
-    mergeDir = f.mkdir("Merged");
+    mergeDir = f->mkdir("Merged");
   }
 
   UInt_t nDirs = cfDirs.size();
@@ -153,8 +138,29 @@ void MakeCombinedCFs(Bool_t isDataCompact, Bool_t isTrainResult)
     combinedCF->Write(combinedCF->GetName(), TObject::kOverwrite);
     finalCount.Write(countName, TObject::kOverwrite);
   }
-  // cfs.push_back((TH1D*)cfsDirs[0]->Get)
-  
+}
+
+
+void MakeCombinedCFs(Bool_t isDataCompact, Bool_t isTrainResult)
+{
+  cout<<"Making combined cfs"<<endl;
+
+  // Get the directories for the cfs and counts
+  vector<TString> dataSetNames;
+  if(!isDataCompact) {
+    TString dataSetNamesArr[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
+    dataSetNames.assign(dataSetNamesArr, dataSetNamesArr+5);
+  } else {
+    TString dataSetNamesArr[2] = {"mm", "pp"};
+    dataSetNames.assign(dataSetNamesArr, dataSetNamesArr+2);
+  }
+
+  TFile f("CFs.root", "update");
+  vector<TDirectory*> dataDirs = GetDataDirectories(f, isTrainResult);
+
+  for(UInt_t iDir = 0; iDir < dataDirs.size(); iDir++) {
+    CombineCFsInDataDir(dataDirs[iDir], dataSetNames);
+  }
 }
 
 void CombineCentralities(TString pairType)
