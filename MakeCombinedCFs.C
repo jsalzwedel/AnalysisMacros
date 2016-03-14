@@ -226,14 +226,21 @@ void CombineCentralitiesForDirectory(TString pairType, TDirectory *dataDir)
   }
 }
 
-void CombineCentralitiesForEachPairType()
+void CombineCentralitiesForEachPairType(Bool_t isTrainResult)
 {
   // Run after merging data sets
-
-  
+  TFile cfData("CFs.root", "update");
+  vector<TDirectory*> dataDirs;
+  if(isTrainResult) {
+    dataDirs = GetDataDirectories(cfData, isTrainResult);
+  } else {
+    dataDirs.push_back(&cfData);
+  }
   vector<TString> pairNames = {"LamLam", "ALamALam", "LamALam"};
-  for(UInt_t i = 0; i < pairNames.size(); i++) {
-    CombineCentralities(pairNames[i]);
+  for(UInt_t iData = 0; iData < dataDirs.size(); iData++) {
+    for(UInt_t iPair = 0; iPair < pairNames.size(); iPair++) {
+      CombineCentralitiesForDirectory(pairNames[iPair], dataDirs[iData]);
+    }
   }
 }
 
