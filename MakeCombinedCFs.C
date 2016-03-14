@@ -163,7 +163,7 @@ void MakeCombinedCFs(Bool_t isDataCompact, Bool_t isTrainResult)
   }
 }
 
-void CombineCentralities(TString pairType)
+void CombineCentralitiesForDirectory(TString pairType, TDirectory *dataDir)
 {
   // Gather the cfs and counts to combine centrality bins
 
@@ -171,16 +171,13 @@ void CombineCentralities(TString pairType)
   vector<TString> centBins010 = {"05", "510"};
   vector<TString> centBins1030 = {"1015", "1520", "2025", "2530"};
   vector<TString> centBins3050 = {"3035", "3540", "4045", "4550"};
-
   vector<TString> finalCentBins = {"010", "1030", "3050"};
-
   vector<vector<TString> > centBins;
   centBins.push_back(centBins010);
   centBins.push_back(centBins1030);
   centBins.push_back(centBins3050);
 
-  TFile f("CFs.root","update");
-  TDirectory *mergeDir = (TDirectory*) f.Get("Merged");
+  TDirectory *mergeDir = dataDir->GetDirectory("Merged");
   if(!mergeDir) {
     cout<<"Merge directory does not exist. Cannot merge."<<endl;
     return;
@@ -205,7 +202,6 @@ void CombineCentralities(TString pairType)
       counts.push_back(count[0](0));
     }
 
-
     // Finally, combine the CFs
     TH1D *combinedCF = CombineCFs(cfs, counts);
     TVectorD finalCount(1);
@@ -221,21 +217,14 @@ void CombineCentralities(TString pairType)
     combinedCF->SetAxisRange(0.9, 1.1, "Y");
     combinedCF->SetAxisRange(0., 1., "X");
     
-    //
-
     cout<<"Writing combined CF "<<combinedCF->GetName()
     	<<" to "<<mergeDir->GetName()<<endl;
     combinedCF->SetDirectory(0);
     mergeDir->cd();
     combinedCF->Write(combinedCF->GetName(), TObject::kOverwrite);
     finalCount.Write(combinedCountName, TObject::kOverwrite);
-
-    
   }
-  
-
 }
-
 
 void CombineCentralitiesForEachPairType()
 {
