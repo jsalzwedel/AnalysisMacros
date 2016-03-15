@@ -245,7 +245,7 @@ void CombineCentralitiesForEachPairType(Bool_t isTrainResult)
 }
 
 
-void CombineLLAA()
+void CombineLLAAForDirectory(TDirectory *dataDir)
 {
   // Run after merging centralities
   vector<TString> centBins = {"010", "1030", "3050"};
@@ -253,14 +253,12 @@ void CombineLLAA()
   TString finalPairType = "LLAA";
 
 
-  // Get data dir
-  TFile f("CFs.root","update");
-  TDirectory *mergeDir = (TDirectory*) f.Get("Merged");
+  // Get merge dir
+  TDirectory *mergeDir = dataDir->GetDirectory("Merged");
   if(!mergeDir) {
     cout<<"Merge directory does not exist. Cannot merge."<<endl;
     return;
   }
-
 
   for(UInt_t iCent = 0; iCent < centBins.size(); iCent++) {
     vector<TH1D*> cfs;
@@ -294,8 +292,6 @@ void CombineLLAA()
     // Set axis ranges
     combinedCF->SetAxisRange(0.9, 1.1, "Y");
     combinedCF->SetAxisRange(0., 1., "X");
-    
-    //
 
     cout<<"Writing combined CF "<<combinedCF->GetName()
     	<<" to "<<mergeDir->GetName()<<endl;
