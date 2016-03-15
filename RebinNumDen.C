@@ -52,10 +52,8 @@ void RunRebinForField(TDirectory *dataDir, Int_t rebinNumber) {
 }
 
 
-void RebinNumDenInDirectory(TDirectory *dataDir, Bool_t isDataCompact)
+void RebinNumDenInDirectory(TDirectory *dataDir, Bool_t isDataCompact, Int_t rebinNumber)
 {
-  Int_t rebinNumber = 4;
-
   vector<TString> fieldNames;
   if(!isDataCompact) {
     TString fieldNamesArr[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
@@ -76,13 +74,13 @@ void RebinNumDenInDirectory(TDirectory *dataDir, Bool_t isDataCompact)
   }
 }
 
-void RebinNumDen(Bool_t isDataCompact, Bool_t isTrainResult)
+void RebinNumDen(Bool_t isDataCompact, Bool_t isTrainResult, Int_t rebinNumber)
 {
   TFile cfFile("CFs.root", "update");
   vector<TDirectory*> dataDirs = GetDataDirectories(cfFile, isTrainResult);
 
   for(UInt_t iDir = 0; iDir < dataDirs.size(); iDir++) {
-    RebinNumDenInDirectory(dataDirs[iDir], isDataCompact);
+    RebinNumDenInDirectory(dataDirs[iDir], isDataCompact, rebinNumber);
   }
 
 }
