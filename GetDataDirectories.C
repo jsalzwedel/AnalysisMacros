@@ -1,6 +1,9 @@
 // Get data directories contained within CFs.root.  Used in MakeCFs and
 // MakeCombinedCfs.
 
+#ifndef GET_DATA_DIR_C
+#define GET_DATA_DIR_C
+
 vector<TDirectory*> GetDataDirectories(TFile& inputFile, Bool_t isTrainResult)
 {
   vector<TDirectory*> dataDirs;
@@ -39,3 +42,5 @@ vector<TDirectory*> GetDataDirectories(TFile& inputFile, Bool_t isTrainResult)
   }
   return dataDirs;
 }
+
+#endif
