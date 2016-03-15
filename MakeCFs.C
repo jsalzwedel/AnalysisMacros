@@ -126,12 +126,11 @@ void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm,
 
 
 
-void MakeCFs(Bool_t isDataCompact, Bool_t isTrainResult)
+void MakeCFs(Bool_t isDataCompact, Bool_t isTrainResult,
+	     Double_t lowNorm, Double_t highNorm,
+	     Int_t rebinNumber)
 {
   // Make CFs for each field within each dataset
-  Int_t rebinNumber = 4;
-  Double_t lowNorm = 0.5;
-  Double_t highNorm = 0.7;
   
   TFile f("CFs.root", "update");
 
