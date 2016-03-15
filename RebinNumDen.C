@@ -1,4 +1,4 @@
-
+#include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/GetDataDirectories.C"
 
 void RebinDir(TDirectory *inDir, TDirectory *outDir, Int_t rebinNumber)
 {
@@ -26,7 +26,7 @@ void RebinDir(TDirectory *inDir, TDirectory *outDir, Int_t rebinNumber)
 }
 
 
-void RunRebinForDataset(TDirectory *dataDir, Int_t rebinNumber) {
+void RunRebinForField(TDirectory *dataDir, Int_t rebinNumber) {
 
   TDirectory *numDir = (TDirectory*) dataDir->GetDirectory("Num");
   if(!numDir) {
@@ -52,20 +52,37 @@ void RunRebinForDataset(TDirectory *dataDir, Int_t rebinNumber) {
 }
 
 
-void RebinNumDen()
+void RebinNumDenInDirectory(TDirectory *dataDir, Bool_t isDataCompact)
 {
-  vector<TString> dataNames = {"mm1", "mm2", "mm3", "pp1", "pp2"};
   Int_t rebinNumber = 4;
 
-  TFile inFile("CFs.root", "Update");
+  vector<TString> fieldNames;
+  if(!isDataCompact) {
+    TString fieldNamesArr[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
+    fieldNames.assign(fieldNamesArr, fieldNamesArr+5);
+  } else {
+    TString fieldNamesArr[2] = {"mm", "pp"};
+    fieldNames.assign(fieldNamesArr, fieldNamesArr+2);
+  }
 
-  for(UInt_t i = 0; i < dataNames.size(); i++) {
-    TDirectory *dataDir = (TDirectory*) inFile.GetDirectory(dataNames[i]);
-    if(!dataDir) {
+  for(UInt_t i = 0; i < fieldNames.size(); i++) {
+    TDirectory *fieldDir = dataDir->GetDirectory(fieldNames[i]);
+    if(!fieldDir) {
       cout<<"Could not find data directory named "
-	  <<dataNames[i]<<endl;
+	  <<fieldNames[i]<<endl;
       continue;
     }
-    RunRebinForDataset(dataDir, rebinNumber);
+    RunRebinForField(fieldDir, rebinNumber);
   }
+}
+
+void RebinNumDen(Bool_t isDataCompact, Bool_t isTrainResult)
+{
+  TFile cfFile("CFs.root", "update");
+  vector<TDirectory*> dataDirs = GetDataDirectories(cfFile, isTrainResult);
+
+  for(UInt_t iDir = 0; iDir < dataDirs.size(); iDir++) {
+    RebinNumDenInDirectory(dataDirs[iDir], isDataCompact);
+  }
+
 }
