@@ -5,24 +5,18 @@
 
 
 
-void RunAllCF(Bool_t isDataReal)
+void RunAllCF(Bool_t isDataCompact, Bool_t isTrainResult)
 {
   // Project out out the signal and denominator distributions
-  MakeCFProjections(isDataReal);
+  MakeCFProjections(isDataCompact, isTrainResult);
 
   // Make CFs from the (unmerged) data
-  MakeCFs(isDataReal);
+  MakeCFs(isDataCompact, isTrainResult);
 
-  // Combine data sets
-  MakeCombinedCFs(isDataReal);
-
-  // Combine centrality bins
-  CombineCentralitiesForEachPairType();
-
-  // Combine together LL and AA
-  CombineLLAA();
+  // Combine fields, centralities and LLAA for each cut
+  MakeCombinedCFs(isDataCompact, isTrainResult);
 
   // Rebin the numerator and denominator distributions
   // for use with log fitting
-  RebinNumDen();
+  RebinNumDen(isDataCompact, isTrainResult);
 }
