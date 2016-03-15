@@ -2,12 +2,9 @@
 // Needs to be run using Root 6
 //
 // (0. Make CFs using MakeCFs.C)
-// 1. Run MakeCombinedCFs()
-// 2. Run CombineCentralitiesForEachPairType()
-// 3. Run CombineLLAA()
-//
+// 1. Run MakeCombinedCFs() <- Handles all combining
+// 
 // *************************
-
 
 
 #include <iostream>
@@ -137,8 +134,6 @@ void CombineCFsInDataDir(TDirectory *f, vector<TString> dataSetNames)
 }
 
 
-
-
 void CombineCentralitiesForDirectory(TString pairType, TDirectory *dataDir)
 {
   // Gather the cfs and counts to combine centrality bins
@@ -202,25 +197,6 @@ void CombineCentralitiesForDirectory(TString pairType, TDirectory *dataDir)
   }
 }
 
-// void CombineCentralitiesForEachPairType(Bool_t isTrainResult)
-// {
-//   // Run after merging data sets
-//   TFile cfData("CFs.root", "update");
-//   vector<TDirectory*> dataDirs;
-//   if(isTrainResult) {
-//     dataDirs = GetDataDirectories(cfData, isTrainResult);
-//   } else {
-//     dataDirs.push_back(&cfData);
-//   }
-//   vector<TString> pairNames = {"LamLam", "ALamALam", "LamALam"};
-//   for(UInt_t iData = 0; iData < dataDirs.size(); iData++) {
-//     for(UInt_t iPair = 0; iPair < pairNames.size(); iPair++) {
-//       CombineCentralitiesForDirectory(pairNames[iPair], dataDirs[iData]);
-//     }
-//   }
-// }
-
-
 void CombineLLAAForDirectory(TDirectory *dataDir)
 {
   // Run after merging centralities
@@ -278,23 +254,6 @@ void CombineLLAAForDirectory(TDirectory *dataDir)
   
   }
 }
-
-
-// void CombineLLAAForAllDirectories(Bool_t isTrainResult)
-// {
-//   // Run after merging data sets
-//   TFile cfData("CFs.root", "update");
-//   vector<TDirectory*> dataDirs;
-//   if(isTrainResult) {
-//     dataDirs = GetDataDirectories(cfData, isTrainResult);
-//   } else {
-//     dataDirs.push_back(&cfData);
-//   }
-//   for(UInt_t iData = 0; iData < dataDirs.size(); iData++) {
-//     CombineLLAAForDirectory(dataDirs[iData]);
-//   }
-// }
-
 
 void MakeCombinedCFs(Bool_t isDataCompact, Bool_t isTrainResult)
 {

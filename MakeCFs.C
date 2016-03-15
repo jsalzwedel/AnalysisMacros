@@ -128,7 +128,7 @@ void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm,
 
 void MakeCFs(Bool_t isDataCompact, Bool_t isTrainResult)
 {
-  // Merge between datasets, then merge centralities
+  // Make CFs for each field within each dataset
   Int_t rebinNumber = 4;
   Double_t lowNorm = 0.5;
   Double_t highNorm = 0.7;
@@ -145,40 +145,7 @@ void MakeCFs(Bool_t isDataCompact, Bool_t isTrainResult)
   }
   
   vector<TDirectory*> dataDirs = GetDataDirectories(f, isTrainResult);
-  // if(isTrainResult) {
-  //   // Get all the the directories and find their subdirectories
-  //   TList *dirList = f.GetListOfKeys();
-  //   TIter dirIter(dirList);
-  //   TObject *dirObj = NULL;
-
-  //   // Loop over all variable cut directories
-  //   // and cut bin directories and add them to dataDirs
-  //   while((dirObj = dirIter())) { // var cut directories
-  //     TKey *dirKey = dynamic_cast<TKey*>(dirObj);
-  //     TDirectory *currentDir = dynamic_cast<TDirectory*>(dirKey->ReadObj());
-  //     if(!currentDir) continue;
-  //     TString currentDirName = currentDir->GetName();
-  //     assert(currentDirName.Contains("Var"));
-  //     // This dir exists.  Now grab all cut bin directories inside
-  //     TList *cutList = currentDir->GetListOfKeys();
-  //     TIter cutIter(cutList);
-  //     TObject *cutDirObj = NULL;
-  //     while((cutDirObj = cutIter())) { // cut bin directories
-  // 	TKey *cutKey = dynamic_cast<TKey*>(cutDirObj);
-  // 	TDirectory *cutDir = dynamic_cast<TDirectory*>(cutKey->ReadObj());
-  // 	if(!cutDir) continue;
-  // 	TString cutDirName = cutDir->GetName();
-  // 	assert(cutDirName.Contains("Cut"));
-
-  // 	//If we got this far, the directory exists. Add it to the vector
-  // 	dataDirs.push_back(cutDir);
-  //     } // End cut bin directory while loop
-  //   } // End var cut directory while loop 
-  // } else {
-  //   // The file itself is the only data directory.
-  //   dataDirs.push_back(&f);
-  // }
-  
+ 
   //Now make the CFs for each data and field directory
   for(UInt_t iDir = 0; iDir < dataDirs.size(); iDir++) {
     TDirectory *currentDataDir = dataDirs[iDir];
