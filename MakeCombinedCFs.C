@@ -27,10 +27,6 @@ using namespace std;
 vector<TDirectory*> GetDirectories(TDirectory *f, vector<TString> dataSetNames, TString dirName)
 {
   vector<TDirectory*> dirs;
-  // if(dataSetNames.size() < 2) {
-  //   cout<<"
-  // }
-
   UInt_t nDirs = dataSetNames.size();
 
   for(UInt_t i = 0; i < nDirs; i++) {
@@ -141,27 +137,7 @@ void CombineCFsInDataDir(TDirectory *f, vector<TString> dataSetNames)
 }
 
 
-void MakeCombinedCFs(Bool_t isDataCompact, Bool_t isTrainResult)
-{
-  cout<<"Making combined cfs"<<endl;
 
-  // Get the directories for the cfs and counts
-  vector<TString> dataSetNames;
-  if(!isDataCompact) {
-    TString dataSetNamesArr[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
-    dataSetNames.assign(dataSetNamesArr, dataSetNamesArr+5);
-  } else {
-    TString dataSetNamesArr[2] = {"mm", "pp"};
-    dataSetNames.assign(dataSetNamesArr, dataSetNamesArr+2);
-  }
-
-  TFile f("CFs.root", "update");
-  vector<TDirectory*> dataDirs = GetDataDirectories(f, isTrainResult);
-
-  for(UInt_t iDir = 0; iDir < dataDirs.size(); iDir++) {
-    CombineCFsInDataDir(dataDirs[iDir], dataSetNames);
-  }
-}
 
 void CombineCentralitiesForDirectory(TString pairType, TDirectory *dataDir)
 {
@@ -226,23 +202,23 @@ void CombineCentralitiesForDirectory(TString pairType, TDirectory *dataDir)
   }
 }
 
-void CombineCentralitiesForEachPairType(Bool_t isTrainResult)
-{
-  // Run after merging data sets
-  TFile cfData("CFs.root", "update");
-  vector<TDirectory*> dataDirs;
-  if(isTrainResult) {
-    dataDirs = GetDataDirectories(cfData, isTrainResult);
-  } else {
-    dataDirs.push_back(&cfData);
-  }
-  vector<TString> pairNames = {"LamLam", "ALamALam", "LamALam"};
-  for(UInt_t iData = 0; iData < dataDirs.size(); iData++) {
-    for(UInt_t iPair = 0; iPair < pairNames.size(); iPair++) {
-      CombineCentralitiesForDirectory(pairNames[iPair], dataDirs[iData]);
-    }
-  }
-}
+// void CombineCentralitiesForEachPairType(Bool_t isTrainResult)
+// {
+//   // Run after merging data sets
+//   TFile cfData("CFs.root", "update");
+//   vector<TDirectory*> dataDirs;
+//   if(isTrainResult) {
+//     dataDirs = GetDataDirectories(cfData, isTrainResult);
+//   } else {
+//     dataDirs.push_back(&cfData);
+//   }
+//   vector<TString> pairNames = {"LamLam", "ALamALam", "LamALam"};
+//   for(UInt_t iData = 0; iData < dataDirs.size(); iData++) {
+//     for(UInt_t iPair = 0; iPair < pairNames.size(); iPair++) {
+//       CombineCentralitiesForDirectory(pairNames[iPair], dataDirs[iData]);
+//     }
+//   }
+// }
 
 
 void CombineLLAAForDirectory(TDirectory *dataDir)
@@ -300,5 +276,49 @@ void CombineLLAAForDirectory(TDirectory *dataDir)
     combinedCF->Write(combinedCF->GetName(), TObject::kOverwrite);
     finalCount.Write(combinedCountName, TObject::kOverwrite);
   
+  }
+}
+
+
+// void CombineLLAAForAllDirectories(Bool_t isTrainResult)
+// {
+//   // Run after merging data sets
+//   TFile cfData("CFs.root", "update");
+//   vector<TDirectory*> dataDirs;
+//   if(isTrainResult) {
+//     dataDirs = GetDataDirectories(cfData, isTrainResult);
+//   } else {
+//     dataDirs.push_back(&cfData);
+//   }
+//   for(UInt_t iData = 0; iData < dataDirs.size(); iData++) {
+//     CombineLLAAForDirectory(dataDirs[iData]);
+//   }
+// }
+
+
+void MakeCombinedCFs(Bool_t isDataCompact, Bool_t isTrainResult)
+{
+  cout<<"Making combined cfs"<<endl;
+
+  // Get the directories for the cfs and counts
+  vector<TString> dataSetNames;
+  if(!isDataCompact) {
+    TString dataSetNamesArr[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
+    dataSetNames.assign(dataSetNamesArr, dataSetNamesArr+5);
+  } else {
+    TString dataSetNamesArr[2] = {"mm", "pp"};
+    dataSetNames.assign(dataSetNamesArr, dataSetNamesArr+2);
+  }
+  vector<TString> pairNames = {"LamLam", "ALamALam", "LamALam"};
+ 
+  TFile cfFile("CFs.root", "update");
+  vector<TDirectory*> dataDirs = GetDataDirectories(cfFile, isTrainResult);
+
+  for(UInt_t iDir = 0; iDir < dataDirs.size(); iDir++) {
+    CombineCFsInDataDir(dataDirs[iDir], dataSetNames);
+    for(UInt_t iPair = 0; iPair < pairNames.size(); iPair++) {
+      CombineCentralitiesForDirectory(pairNames[iPair], dataDirs[iDir]);
+    }
+    CombineLLAAForDirectory(dataDirs[iDir]);
   }
 }
