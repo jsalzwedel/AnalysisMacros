@@ -79,10 +79,20 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist
     cout<<"This fails the cut!"<<endl;
     FitWithConstant(barlowDifference, diffDir, fitRangeLow, fitRangeHigh);
   }
-
-
-
-  //...
-
 }
 
+
+void AnalyzeSystematics()
+{
+  // Open CFs.root.
+  // Sequentially navigate to each Var directory.
+  // If more than one cut directory, grab the pairs of cut directories
+  // that are relevant.
+  // Grab the correlations functions to compare in each directory.
+  // Determine a naming scheme for cut difference results.
+  // Run each matching correlation function pair through
+  // AnalyzeSystematicsForHists.
+  // Save results to "Systematics" directory within Var directory
+
+
+}
