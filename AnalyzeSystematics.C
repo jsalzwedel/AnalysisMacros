@@ -52,6 +52,7 @@ void FitWithConstant(TH1D* h1, TDirectory *outputDir,
 
 void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
 				TDirectory *diffDir, TString nameSuffix,
+				Double_t pValueCutoff,
 				Double_t fitRangeLow, Double_t fitRangeHigh)
 {
   // Take two hists (reference hist with nominal cut values, and
@@ -59,8 +60,6 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
   // Then check if result is consistent with zero.  If not,
   // fit to find systematic difference
   cout<<"Analyzing result"<<endl;
-
-  Double_t pValueCutoff = 0.01; // ******* Rearrange this
 
   TString newName = referenceHist->GetName();
   TH1D *barlowDifference = ComputeRogerBarlowDifference(referenceHist, tweakHist);
@@ -131,7 +130,7 @@ TH1D *GetHistogram(TDirectory *dir, TString subFolderName, TString histName)
   return hist;
 }
 
-void AnalyzeSystematics()
+void AnalyzeSystematics(Double_t pValueCutoff = 0.05, Double_t fitRangeLow = 0.0, Double_t fitRangeHigh = 0.4)
 {
   
 
@@ -174,10 +173,9 @@ void AnalyzeSystematics()
 	}
 	TString nameSuffix = checkPairs[iCutPair][0];
 	nameSuffix += checkPairs[iCutPair][1];
-	Double_t fitRangeLow = 0.;  // ****** Reorganize this
-	Double_t fitRangeHigh =.4;  // ******
 	AnalyzeSystematicsForHists(hist1, hist2, diffOutputDir,
-				   nameSuffix, fitRangeLow, fitRangeHigh);
+				   nameSuffix, pValueCutoff,
+				   fitRangeLow, fitRangeHigh);
       }// end species
     } // end cut pair
   } // end var directory
