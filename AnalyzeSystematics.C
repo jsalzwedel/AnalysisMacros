@@ -3,51 +3,57 @@
 #include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/RogerBarlowHelper.C"
 
 
-Bool_t Chi2TestWithZero(TH1D* h1, Double_t pValueCutoff,
+Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t pValueCutoff,
 			Double_t fitRangeLow, Double_t fitRangeHigh)
 {
 
-  cout<<"\t\t********************Doing Chi2 test****************"<<endl;
-  // Double_t fitRangeLow = 0.;
-  // Double_t fitRangeHigh = 1.;
-  
-  TF1 *f = new TF1("f","0*x", fitRangeLow, fitRangeHigh);
+  // Fit function and save TF1
+  TString fitName = h1->GetName();
+  fitName += "DiffFit";
+  TF1 *fit = new TF1(fitName,"[0]", fitRangeLow, fitRangeHigh);
+  h1->Fit(fit, "R0Q");
+ 
 
+  // Check chisquare of fit
+  // Double_t chi2 = h1->Chisquare(fit, "R");
+  Double_t chi2 = fit->GetChisquare();
   Int_t binLow = h1->FindBin(fitRangeLow);
   Int_t binHigh = h1->FindBin(fitRangeHigh);
-
   Int_t ndf = binHigh - binLow + 1;
-
-  Double_t chi2 = h1->Chisquare(f);
-
   Double_t prob = TMath::Prob(chi2, ndf);
   cout<<"Chi2:\t"<<chi2
       <<".\tP-value:\t"<<prob
       <<endl<<endl;
 
-  return (prob > pValueCutoff);
+  Bool_t doesPass = (prob > pValueCutoff);
+
+  if(!doesPass) {
+    outputDir->cd();
+    fit->Write(fit->GetName(), TObject::kOverwrite);
+  }
+  return doesPass;
 }
 
-void FitWithConstant(TH1D* h1, TDirectory *outputDir,
-			Double_t fitRangeLow, Double_t fitRangeHigh)
-{
-  // Double_t fitRangeLow = 0.;
-  // Double_t fitRangeHigh = .4;
-  TString fitName = h1->GetName();
-  fitName += "DiffFit";
-  TF1 *fit = new TF1(fitName,"[0]", fitRangeLow, fitRangeHigh);
-  fit->SetName(fitName);
-  fit->SetTitle(fitName);
+// void FitWithConstant(TH1D* h1, TDirectory *outputDir,
+// 			Double_t fitRangeLow, Double_t fitRangeHigh)
+// {
+//   // Double_t fitRangeLow = 0.;
+//   // Double_t fitRangeHigh = .4;
+//   TString fitName = h1->GetName();
+//   fitName += "DiffFit";
 
-  Int_t binLow = h1->FindBin(fitRangeLow);
-  Int_t binHigh = h1->FindBin(fitRangeHigh);
-  h1->Fit(fit, "R0");
+//   fit->SetName(fitName);
+//   fit->SetTitle(fitName);
+
+//   Int_t binLow = h1->FindBin(fitRangeLow);
+//   Int_t binHigh = h1->FindBin(fitRangeHigh);
+//   h1->Fit(fit, "R0");
   
-  // TDirectory *dir = outputDir->GetDirectory("Fit");
-  // if(!dir) dir = out->mkdir("Fit");
-  outputDir->cd();
-  fit->Write(fit->GetName(), TObject::kOverwrite);
-}
+//   // TDirectory *dir = outputDir->GetDirectory("Fit");
+//   // if(!dir) dir = out->mkdir("Fit");
+//   outputDir->cd();
+//   fit->Write(fit->GetName(), TObject::kOverwrite);
+// }
 
 
 void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
@@ -59,7 +65,7 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
   // tweak hist with altered cut values), make difference hist.
   // Then check if result is consistent with zero.  If not,
   // fit to find systematic difference
-  cout<<"Analyzing result"<<endl;
+  // cout<<"Analyzing result"<<endl;
 
   TString newName = referenceHist->GetName();
   TH1D *barlowDifference = ComputeRogerBarlowDifference(referenceHist, tweakHist);
@@ -69,13 +75,13 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
   diffDir->cd();
   barlowDifference->Write(barlowDifference->GetName(), TObject::kOverwrite);
 
-  Bool_t checkPass = Chi2TestWithZero(barlowDifference, pValueCutoff,
+  Bool_t checkPass = Chi2TestWithZero(barlowDifference, diffDir, pValueCutoff, 
 				      fitRangeLow, fitRangeHigh);
   if(checkPass) {
     cout<<"This passes the cut!"<<endl;
   } else {
     cout<<"This fails the cut!"<<endl;
-    FitWithConstant(barlowDifference, diffDir, fitRangeLow, fitRangeHigh);
+    // FitWithConstant(barlowDifference, diffDir, fitRangeLow, fitRangeHigh);
   }
 }
 
@@ -119,14 +125,14 @@ TH1D *GetHistogram(TDirectory *dir, TString subFolderName, TString histName)
   TString path = subFolderName;
   path += "/";
   path += histName;
-  cout<<"Getting histogram at "<<path<<endl;
+  // cout<<"Getting histogram at "<<path<<endl;
 
   TH1D *hist = (TH1D*) dir->Get(path);
   if(!hist) {
     cout<<"Could not find histogram at "<<path<<endl;
     return NULL;
   }
-  cout<<"Histogram acquired!"<<endl;
+  // cout<<"Histogram acquired!"<<endl;
   return hist;
 }
 
