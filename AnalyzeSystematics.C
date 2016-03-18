@@ -23,7 +23,7 @@ Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t pValueCutoff,
   Double_t prob = TMath::Prob(chi2, ndf);
   cout<<"Chi2:\t"<<chi2
       <<".\tP-value:\t"<<prob
-      <<endl<<endl;
+      <<endl;
 
   Bool_t doesPass = (prob > pValueCutoff);
 
@@ -78,9 +78,9 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
   Bool_t checkPass = Chi2TestWithZero(barlowDifference, diffDir, pValueCutoff, 
 				      fitRangeLow, fitRangeHigh);
   if(checkPass) {
-    cout<<"This passes the cut!"<<endl;
+    cout<<"This passes the cut!"<<endl<<endl;
   } else {
-    cout<<"This fails the cut!"<<endl;
+    cout<<"This fails the cut!"<<endl<<endl;
     // FitWithConstant(barlowDifference, diffDir, fitRangeLow, fitRangeHigh);
   }
 }
