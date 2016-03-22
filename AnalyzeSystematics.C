@@ -18,7 +18,14 @@ Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t acceptanceCuto
   Double_t prob = fit->GetProb();
   Double_t fitValue = fit->GetParameter(0);
   Double_t fitError = fit->GetParError(0);
-  Double_t nSigmas = fitValue/fitError;
+  Double_t nSigmas = 0;
+  if(fabs(fitValue) > std::numeric_limits<Double_t>::epsilon() &&
+     fabs(fitError) > std::numeric_limits<Double_t>::epsilon()) {
+    nSigmas = fitValue/fitError;
+  }
+
+
+  
 
   Bool_t doesPass;
   if(usePValueTest) {
