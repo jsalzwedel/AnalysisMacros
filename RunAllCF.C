@@ -2,6 +2,7 @@
 #include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/MakeCFs.C"
 #include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/MakeCombinedCFs.C"
 #include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/RebinNumDen.C"
+#include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/AnalyzeSystematicsC"
 
 
 
@@ -22,4 +23,13 @@ void RunAllCF(Bool_t isDataCompact, Bool_t isTrainResult)
   // Rebin the numerator and denominator distributions
   // for use with log fitting
   RebinNumDen(isDataCompact, isTrainResult, rebinNumber);
+
+  if(isTrainResult) {
+    // Compute systematic differences between cuts and fit
+    // to look for significance.
+    Double_t pValueCutoff = 0.05;
+    Double_t fitRangeLow = 0.0;
+    Double_t fitRangeHigh = 0.2;
+    AnalyzeSystematics(pValueCutoff, fitRangeLow, fitRangeHigh);
+  }
 }
