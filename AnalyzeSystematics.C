@@ -3,8 +3,8 @@
 #include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/RogerBarlowHelper.C"
 
 
-Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t pValueCutoff,
-			Double_t fitRangeLow, Double_t fitRangeHigh)
+Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t acceptanceCutoff,
+			Double_t fitRangeLow, Double_t fitRangeHigh, Bool_t usePValueTest)
 {
 
   // Fit function and save TF1
@@ -12,22 +12,30 @@ Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t pValueCutoff,
   fitName += "DiffFit";
   TF1 *fit = new TF1(fitName,"[0]", fitRangeLow, fitRangeHigh);
   h1->Fit(fit, "R0Q");
- 
 
-  // Check chisquare of fit
-  // Double_t chi2 = h1->Chisquare(fit, "R");
   Double_t chi2 = fit->GetChisquare();
-  Int_t binLow = h1->FindBin(fitRangeLow);
-  Int_t binHigh = h1->FindBin(fitRangeHigh);
-  Int_t ndf = binHigh - binLow + 1;
-  Double_t prob = TMath::Prob(chi2, ndf);
-  cout<<"Chi2:\t"<<chi2
-      <<".\tP-value:\t"<<prob
-      <<endl;
+  Int_t ndf = fit->GetNDF(); // subtract number of fit parameters 
+  Double_t prob = fit->GetProb();
+  Double_t fitValue = fit->GetParameter(0);
+  Double_t fitError = fit->GetParError(0);
+  Double_t nSigmas = fitValue/fitError;
 
-  Bool_t doesPass = (prob > pValueCutoff);
-
+  Bool_t doesPass;
+  if(usePValueTest) {
+    doesPass = (prob > acceptanceCutoff);
+  } else {
+    doesPass = (nSigmas < acceptanceCutoff);
+  }
+  
   if(!doesPass) {
+    cout<<"Chi2: "<<chi2
+	<<".\tP-value: "<<prob
+	<<".\tNDF: "<<ndf
+	<<endl;
+    cout<<"NSigmas: "<<nSigmas
+	<<".\tFitValue: "<<fitValue
+	<<".\tFitError: "<<fitError
+	<<endl;
     outputDir->cd();
     fit->Write(fit->GetName(), TObject::kOverwrite);
   }
@@ -58,7 +66,7 @@ Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t pValueCutoff,
 
 void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
 				TDirectory *diffDir, TString nameSuffix,
-				Double_t pValueCutoff,
+				Double_t acceptanceCutoff, Bool_t usePValueTest,
 				Double_t fitRangeLow, Double_t fitRangeHigh)
 {
   // Take two hists (reference hist with nominal cut values, and
@@ -75,8 +83,8 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
   diffDir->cd();
   barlowDifference->Write(barlowDifference->GetName(), TObject::kOverwrite);
 
-  Bool_t checkPass = Chi2TestWithZero(barlowDifference, diffDir, pValueCutoff, 
-				      fitRangeLow, fitRangeHigh);
+  Bool_t checkPass = Chi2TestWithZero(barlowDifference, diffDir, acceptanceCutoff, 
+				      fitRangeLow, fitRangeHigh, usePValueTest);
   if(checkPass) {
     cout<<"This passes the cut!"<<endl<<endl;
   } else {
@@ -136,7 +144,7 @@ TH1D *GetHistogram(TDirectory *dir, TString subFolderName, TString histName)
   return hist;
 }
 
-void AnalyzeSystematics(Double_t pValueCutoff = 0.05, Double_t fitRangeLow = 0.0, Double_t fitRangeHigh = 0.4)
+void AnalyzeSystematics(Double_t acceptanceCutoff = 0.05, Bool_t usePValueTest = kTRUE, Double_t fitRangeLow = 0.0, Double_t fitRangeHigh = 0.4)
 {
   
 
@@ -179,8 +187,9 @@ void AnalyzeSystematics(Double_t pValueCutoff = 0.05, Double_t fitRangeLow = 0.0
 	}
 	TString nameSuffix = checkPairs[iCutPair][0];
 	nameSuffix += checkPairs[iCutPair][1];
-	AnalyzeSystematicsForHists(hist1, hist2, diffOutputDir,
-				   nameSuffix, pValueCutoff,
+	AnalyzeSystematicsForHists(hist1, hist2,
+				   diffOutputDir, nameSuffix,
+				   acceptanceCutoff, usePValueTest,
 				   fitRangeLow, fitRangeHigh);
       }// end species
     } // end cut pair
