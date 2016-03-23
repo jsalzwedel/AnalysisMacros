@@ -70,6 +70,29 @@ vector< vector<TF1*> > SortTF1s(vector<TF1*> &vecAll)
   return sortedVec;
 }
 
+TF1* AddTF1s(vector<TF1*> &vec) {
+
+}
+
+TF1* AddTF1sInQuadrature(vector<TF1*> &vec, Bool_t isPosErrors) {
+  // Add positive errors in quadrature (or negative if !isPosErrors)
+  // This will not work as desired if the TF1s have different ranges.
+  Double_t quadPar = 0.;
+  for (UInt_t iFit = 0; iFit < vec.size(); iFit++) {
+    TF1 *fit = vec[iFit];
+    Double_t par = fit->GetParameter(0);
+    if (isPosErrors && par < 0.) continue;
+    if (!isPosErrors && par > 0.) continue;
+    quadPar += pow(par,2);
+  }
+
+  quadPar = sqrt(quadPar);
+  if(!isPosErrors) quadPar *= -1.;
+
+  TF1 *combinedTF1 = (TF1*) vec[0]->Clone();
+  combinedTF1->SetParameter(0, quadPar);
+}
+
 void CombineSystematics() {
   vector<TF1*> vecAll = GetAllTF1sFromFile("CFs.root");
   vector< vector<TF1*> > sortedVec = SortTF1s(vecAll);
