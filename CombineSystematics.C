@@ -41,13 +41,37 @@ vector<TF1*> GetAllTF1sFromFile(TString fileName)
 
   cout<<"Found "<<vecTF1.size()<<" TF1s."<<endl;
 
-  for(UInt_t iFit = 0; iFit < vecTF1.size(); iFit++) {
+  for (UInt_t iFit = 0; iFit < vecTF1.size(); iFit++) {
     cout<<vecTF1[iFit]->GetName()<<endl;
   }
   return vecTF1;
 }
 
 
+vector< vector<TF1*> > SortTF1s(vector<TF1*> &vecAll)
+{
+  vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
+			   "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
+
+  vector< vector<TF1*> > sortedVec(names.size());
+  for (UInt_t iFit = 0; iFit < vecAll.size(); iFit++) {
+    TString thisName = vecAll[iFit]->GetName();
+    for (UInt_t iName = 0; iName < names.size(); iName++) {
+      if (thisName.Contains(names[iName])) {
+	sortedVec[iName].push_back(vecAll[iFit]);
+	break;
+      }
+    }
+  }
+
+  for (UInt_t iName = 0; iName < names.size(); iName++) {
+    cout<<"For "<<names[iName]<<", found "<<sortedVec[iName].size()<<endl;
+  }
+  return sortedVec;
+}
+
 void CombineSystematics() {
   vector<TF1*> vecAll = GetAllTF1sFromFile("CFs.root");
+  vector< vector<TF1*> > sortedVec = SortTF1s(vecAll);
 }
+
