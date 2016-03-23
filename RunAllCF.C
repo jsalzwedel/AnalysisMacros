@@ -6,7 +6,7 @@
 
 
 
-void RunAllCF(Bool_t isDataCompact, Bool_t isTrainResult, Bool_t usePValueTest = kTRUE)
+void RunAllCF(Bool_t isDataCompact, Bool_t isTrainResult, Bool_t useNSigmaTest = kTRUE)
 {
   // Project out out the signal and denominator distributions
   MakeCFProjections(isDataCompact, isTrainResult);
@@ -27,9 +27,9 @@ void RunAllCF(Bool_t isDataCompact, Bool_t isTrainResult, Bool_t usePValueTest =
   if(isTrainResult) {
     // Compute systematic differences between cuts and fit
     // to look for significance.
-    Double_t pValueCutoff = 0.05;
+    Double_t nSigmaCut = 2.;
     Double_t fitRangeLow = 0.0;
     Double_t fitRangeHigh = 0.2;
-    AnalyzeSystematics(pValueCutoff, usePValueTest, fitRangeLow, fitRangeHigh);
+    AnalyzeSystematics(nSigmaCut, useNSigmaTest, fitRangeLow, fitRangeHigh);
   }
 }

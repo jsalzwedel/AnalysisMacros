@@ -4,7 +4,7 @@
 
 
 Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t acceptanceCutoff,
-			Double_t fitRangeLow, Double_t fitRangeHigh, Bool_t usePValueTest)
+			Double_t fitRangeLow, Double_t fitRangeHigh, Bool_t useNSigmaTest)
 {
 
   // Fit function and save TF1
@@ -28,10 +28,10 @@ Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t acceptanceCuto
   
 
   Bool_t doesPass;
-  if(usePValueTest) {
+  if(!useNSigmaTest) {
     doesPass = (prob > acceptanceCutoff);
   } else {
-    doesPass = (nSigmas < acceptanceCutoff);
+    doesPass = (fabs(nSigmas) < acceptanceCutoff);
   }
   
   if(!doesPass) {
@@ -73,7 +73,7 @@ Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t acceptanceCuto
 
 void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
 				TDirectory *diffDir, TString nameSuffix,
-				Double_t acceptanceCutoff, Bool_t usePValueTest,
+				Double_t acceptanceCutoff, Bool_t useNSigmaTest,
 				Double_t fitRangeLow, Double_t fitRangeHigh)
 {
   // Take two hists (reference hist with nominal cut values, and
@@ -91,7 +91,7 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
   barlowDifference->Write(barlowDifference->GetName(), TObject::kOverwrite);
 
   Bool_t checkPass = Chi2TestWithZero(barlowDifference, diffDir, acceptanceCutoff, 
-				      fitRangeLow, fitRangeHigh, usePValueTest);
+				      fitRangeLow, fitRangeHigh, useNSigmaTest);
   if(checkPass) {
     cout<<"This passes the cut!"<<endl<<endl;
   } else {
@@ -151,7 +151,7 @@ TH1D *GetHistogram(TDirectory *dir, TString subFolderName, TString histName)
   return hist;
 }
 
-void AnalyzeSystematics(Double_t acceptanceCutoff = 0.05, Bool_t usePValueTest = kTRUE, Double_t fitRangeLow = 0.0, Double_t fitRangeHigh = 0.4)
+void AnalyzeSystematics(Double_t acceptanceCutoff = 0.05, Bool_t useNSigmaTest = kTRUE, Double_t fitRangeLow = 0.0, Double_t fitRangeHigh = 0.4)
 {
   
 
@@ -196,7 +196,7 @@ void AnalyzeSystematics(Double_t acceptanceCutoff = 0.05, Bool_t usePValueTest =
 	nameSuffix += checkPairs[iCutPair][1];
 	AnalyzeSystematicsForHists(hist1, hist2,
 				   diffOutputDir, nameSuffix,
-				   acceptanceCutoff, usePValueTest,
+				   acceptanceCutoff, useNSigmaTest,
 				   fitRangeLow, fitRangeHigh);
       }// end species
     } // end cut pair
