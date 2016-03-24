@@ -4,16 +4,30 @@ enum StudyType {kNoStudy = 0, kTopStudy = 1, kAvgSepStudy = 2};
 
 #include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/RogerBarlowHelper.C"
 
+enum FitType {kConstant = 0, kDampHarm = 1};
+
 
 Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t acceptanceCutoff,
 			Double_t fitRangeLow, Double_t fitRangeHigh, Bool_t useNSigmaTest)
 {
 
+  
+  FitType fitType = kDampHarm;
+  
   // Fit function and save TF1
   TString fitName = h1->GetName();
   fitName += "DiffFit";
-  TF1 *fit = new TF1(fitName,"[0]", fitRangeLow, fitRangeHigh);
-  h1->Fit(fit, "R0Q");
+  TF1 *fit = NULL;
+
+  if(fitType == kConstant) {
+    fit = new TF1(fitName,"[0]", fitRangeLow, fitRangeHigh);
+    fit->SetParName(0,"Constant");
+  } else if (fitType == kDampHarm) {
+    fit = new TF1(fitName,"[0] * exp(-1*[1]*x) * cos([2]*x-[3])", fitRangeLow, fitRangeHigh);
+    fit->SetParNames("Amp", "#gamma", "#omega", "Shift"); 
+  }
+  
+  h1->Fit(fit, "R0Q+S");
 
   Double_t chi2 = fit->GetChisquare();
   Int_t ndf = fit->GetNDF(); // subtract number of fit parameters 
@@ -26,7 +40,7 @@ Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t acceptanceCuto
     nSigmas = fitValue/fitError;
   }
 
-
+  gStyle->SetOptFit(1);
   
 
   Bool_t doesPass;
@@ -46,8 +60,9 @@ Bool_t Chi2TestWithZero(TH1D* h1, TDirectory *outputDir, Double_t acceptanceCuto
 	<<".\tFitError: "<<fitError
 	<<endl;
     outputDir->cd();
-    fit->Write(fit->GetName(), TObject::kOverwrite);
+    fitName.Prepend("Fail");
   }
+  fit->Write(fitName, TObject::kOverwrite);
   return doesPass;
 }
 
@@ -90,11 +105,11 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
   barlowDifference->SetTitle(newName + "BarlowDifference" + nameSuffix);
   barlowDifference->SetDirectory(0);
   diffDir->cd();
-  barlowDifference->Write(barlowDifference->GetName(), TObject::kOverwrite);
 
   Bool_t checkPass = Chi2TestWithZero(barlowDifference, diffDir, acceptanceCutoff, 
 				      fitRangeLow, fitRangeHigh, useNSigmaTest);
-  if(checkPass) {
+  barlowDifference->Write(barlowDifference->GetName(), TObject::kOverwrite);
+    if(checkPass) {
     cout<<"This passes the cut!"<<endl<<endl;
   } else {
     cout<<"This fails the cut!"<<endl<<endl;
