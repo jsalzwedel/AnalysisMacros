@@ -10,7 +10,7 @@
 
 void AddTF1sFromSubdirToVector(vector<TF1*> &vec, TDirectory *currentDir)
 {
-  currentDir->ls();
+  // currentDir->ls();
 
   // Loop over all entries of this directory
   TKey *key;
@@ -26,7 +26,9 @@ void AddTF1sFromSubdirToVector(vector<TF1*> &vec, TDirectory *currentDir)
       AddTF1sFromSubdirToVector(vec, subdir);
     } else if (cl->InheritsFrom(TF1::Class())) {
       // Add all TF1s to the vector
-      TF1 *fitResult = (TF1*) currentDir->Get(key->GetName());
+      TString fitName = key->GetName();
+      if (!fitName.Contains("Fail")) continue;
+      TF1 *fitResult = (TF1*) currentDir->Get(fitName);
       vec.push_back(fitResult);
     }
   }
@@ -53,6 +55,7 @@ vector<TF1*> GetAllTF1sFromFile(TString fileName)
 
 vector< vector<TF1*> > SortTF1s(vector<TF1*> &vecAll)
 {
+  cout << "Sorting error TF1s" << endl;
   vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
 			   "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
 
@@ -94,7 +97,7 @@ void CombinePosNegSeparately(vector <vector <Double_t> > errorVectors,
   // Get all the error vectors.  Combine all the postive
   // values in quadrature, and combine all the negative values
   // in quadrature
-
+  // cout << "Combining error vectors" << endl;
 
   // Grab an error vector
   for (UInt_t iErrVec = 0; iErrVec < errorVectors.size(); iErrVec++) {
@@ -116,31 +119,44 @@ void CombinePosNegSeparately(vector <vector <Double_t> > errorVectors,
     }
   }
 
-  // Sqrt the results for each bin, and set negVals to be negative
+  // Sqrt the results for each bin
+  // TGraphAsymmErrors wants negVals to be positive
   for (UInt_t iBin = 0; iBin < posVals.size(); iBin++) {
     posVals[iBin] = sqrt(posVals[iBin]);
     negVals[iBin] = sqrt(negVals[iBin]);
-    negVals[iBin] *= -1.;
+    // negVals[iBin] *= -1.;
   } 
 }
 
 TGraphAsymmErrors *ConstructAsymmTGraph(const TH1D* baseHist, const vector<Double_t> posVals, const vector<Double_t> negVals)
 {
-  cout << "Constructing TGraph for " << baseHist->GetName() << endl;
+  // cout << "Constructing TGraph for " << baseHist->GetName() << endl;
   TGraphAsymmErrors *graph = new TGraphAsymmErrors(baseHist);
   if(!graph) {
     cout<<"Graph not custructed!"<<endl;
     assert(graph);
   }
 
-  
-  for (UInt_t iBin = 0; iBin < posVals.size(); iBin++) { 
-    graph->SetPointEYlow(iBin, negVals[iBin]);
-    graph->SetPointEYhigh(iBin, posVals[iBin]);
+  // Set all errors to zero
+  for(Int_t iBin = 0; iBin < graph->GetN(); iBin++) {
     graph->SetPointEXlow(iBin, 0);
     graph->SetPointEXhigh(iBin, 0);
+    graph->SetPointEYlow(iBin, 0);
+    graph->SetPointEYhigh(iBin, 0);
   }
-  cout << "TGraph successfully constructed"<<endl;
+  
+  for (UInt_t iBin = 0; iBin < posVals.size(); iBin++) {
+    cout<<"Bin: "<<iBin
+	<<"\tErrLow: "<<negVals[iBin]
+	<<"\tErrHigh: "<<posVals[iBin]
+	<<endl;
+    graph->SetPointEYlow(iBin, negVals[iBin]);
+    graph->SetPointEYhigh(iBin, posVals[iBin]);
+  }
+
+  // graph->SetMar
+  
+  // cout << "TGraph successfully constructed"<<endl;
   return graph;
 }
 
@@ -168,7 +184,7 @@ TF1* AddConstantTF1sInQuadrature(vector<TF1*> &vec, Bool_t isPosErrors) {
 
 TString GetBaseName(Int_t nameIndex)
 {
-  cout<<"Getting base name"<<endl;
+  // cout<<"Getting base name"<<endl;
   vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
 			   "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
 
@@ -183,17 +199,21 @@ TString GetBaseName(Int_t nameIndex)
 
 TH1D *GetBaseHistogram(Int_t iSys)
 {
-  cout<<"Getting base histogram"<<endl;
+  // cout<<"Getting base histogram"<<endl;
   // Grab the correlation function corresponding to the index.
   // This is the default CF that uses all nominal cut values.
 
   TFile inputFile("/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-03/04-Train-SysCutChecks/CFs.root", "read");
   TDirectory *dir = inputFile.GetDirectory("Var0/Cut1/Merged");
-
+  if(!dir) {
+    cout << "could not find base histogram directory" <<endl;
+  }
   // get the right histogram
   TString histName = GetBaseName(iSys);
   TH1D *baseHist = (TH1D*)dir->Get(histName);
+  baseHist->SetDirectory(0);
   assert(baseHist);
+  // cout<<"We have found the histogram"<<endl;
   return baseHist;
 }
 
@@ -234,19 +254,19 @@ void CombineSystematics() {
     vector<Double_t> negVals;
     CombinePosNegSeparately(errVecs, posVals, negVals);
     TH1D* baseHist = GetBaseHistogram(iSys);
-    if(baseHist) {
-      cout << "Found base histogram "<< baseHist->GetName() << endl;
-    } else {
-      cout << "Could not find histogram for "<< GetBaseName(iSys) << endl;
-    }
+    // if(baseHist) {
+    //   // cout << "Found base histogram "<< baseHist->GetName() << endl;
+    // } else {
+    //   cout << "Could not find histogram for "<< GetBaseName(iSys) << endl;
+    // }
     TGraphAsymmErrors *graphAsymm = ConstructAsymmTGraph(baseHist, posVals, negVals);
     TString graphName = GetBaseName(iSys);
     graphName += "AsymmErrors";
     outputDir->cd();
-    cout << "Writing TGraphError" << endl;
+    // cout << "Writing TGraphError" << endl;
     graphAsymm->Write(graphName, TObject::kOverwrite);
     baseHist->Write(baseHist->GetName(), TObject::kOverwrite);
-    cout << "Constructed and saved " << graphName << endl;
+    // cout << "Constructed and saved " << graphName << endl;
   }
 
   // Make sure all the vectors are the same size
