@@ -48,6 +48,8 @@ vector<TF1*> GetAllTF1sFromFile(TString fileName)
 }
 
 
+
+
 vector< vector<TF1*> > SortTF1s(vector<TF1*> &vecAll)
 {
   vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
@@ -120,6 +122,19 @@ void CombinePosNegSeparately(vector <vector <Double_t> > errorVectors,
   } 
 }
 
+TGraphAsymmErrors *ConstructAsymmTGraph(const TH1D* baseHist, const vector<Double_t> posVals, const vector<Double_t> negVals)
+{
+  TGraphAsymmErrors *graph = new TGraphAsymmErrors(baseHist);
+  
+  for (UInt_t iBin = 0; iBin < posVals.size(); iBin++) { 
+    graph->SetPointEYlow(iBin, negVals[iBin]);
+    graph->SetPointEYhigh(iBin, posVals[iBin]);
+    graph->SetPointEXlow(iBin, 0);
+    graph->SetPointEXhigh(iBin, 0);
+  }
+  return graph;
+}
+
 TF1* AddConstantTF1sInQuadrature(vector<TF1*> &vec, Bool_t isPosErrors) {
   // Add positive errors in quadrature (or negative if !isPosErrors)
   // This will not work as desired if the TF1s have different ranges.
@@ -140,10 +155,51 @@ TF1* AddConstantTF1sInQuadrature(vector<TF1*> &vec, Bool_t isPosErrors) {
   combinedTF1->SetParameter(0, quadPar);
 }
 
+TString GetBaseName(const TObject *obj)
+{
+  vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
+			   "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
+
+  TString thisName = obj->GetName();
+  for(UInt_t iName = 0; iName < names.size(); iName++) {
+    if (thisName.Contains(names[iName])) {
+      return names[iName];
+    }
+  }
+  return "NoNameFound";
+}
+
+
+TH1D *GetBaseHistogram(iSys)
+{
+  // Grab the correlation function corresponding to the index.
+  // This is the default CF that uses all nominal cut values.
+
+  TFile inputFile("/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-03/04-Train-SysCutChecks/CFs.root", "read");
+  TDirectory *dir = inputFile->GetDirectory("Var0/Cut1/Merged");
+
+  // get the right histogram
+  vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
+			   "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
+  TString histName = names[iSys];
+  TH1D *baseHist = (TH1D*)dir->Get(histName);
+  return baseHist;
+}
+
 void CombineSystematics() {
   vector<TF1*> vecAll = GetAllTF1sFromFile("CFs.root");
   vector< vector<TF1*> > sortedVec = SortTF1s(vecAll);
+  TFile outputFile("SysErrors.root", "update");
 
+
+
+  // TDirectory *outputDir
+  TDirectory *outputDir = outputFile.GetDirectory("TopologicalSystematics");
+  if(!outputDir) {
+    outputDir = outputFile.mkdir("TopologicalSystematics");
+  }
+  
+  
   // Loop over the different cf systems
   for (UInt_t iSys = 0; iSys < sortedVec.size(); iSys++) {
     vector< vector<Double_t> > errVecs;
@@ -156,8 +212,14 @@ void CombineSystematics() {
     vector<Double_t> posVals;
     vector<Double_t> negVals;
     CombinePosNegSeparately(errVecs, posVals, negVals);
-    TGraphAsymmErrors graphAsymm = ConstructAsymmTGraphAtZero(posVals, negVals);
-    
+    TH1D* baseHist = GetBaseHistogram(iSys);
+    TGraphAsymmErrors graphAsymm = ConstructAsymmTGraphAtZero(baseHist, posVals, negVals);
+    TString graphName = GetBaseName(baseHist);
+    graphName += "AsymmErrors";
+    outputDir->cd();
+    graphAsymm->Write(graphName, TObject::kOverwrite);
+    baseHist->Write(baseHist->GetName(), TObject::kOverwrite);
+    cout << "Constructed and saved " << graphName << endl;
   }
 }
 
