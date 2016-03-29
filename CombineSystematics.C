@@ -78,7 +78,7 @@ vector<Double_t> ConvertTF1ToVector(TF1* fit) {
   // then use that to make a vector of doubles
 
   // Get the histogram equivalent of the fit.
-  TH1D *hist = fit->GetHistogram();
+  TH1 *hist = fit->GetHistogram();
   Int_t nBins = hist->GetNbinsX();
   vector<Double_t> valVec;
   for (Int_t iBin = 1; iBin < nBins + 1; iBin++) {
@@ -94,12 +94,13 @@ void CombinePosNegSeparately(vector <vector <Double_t> > errorVectors,
   // Get all the error vectors.  Combine all the postive
   // values in quadrature, and combine all the negative values
   // in quadrature
-  assert(posVals.size() == negVals.size());
+
 
   // Grab an error vector
-  for (UInt_t iErrVec = 0; iErrVec < errVectors.size(); iErrVec++) {
+  for (UInt_t iErrVec = 0; iErrVec < errorVectors.size(); iErrVec++) {
     vector<Double_t> &thisVec = errorVectors[iErrVec];
-    assert(thisVec.size() == posVals.size());
+    posVals.resize(thisVec.size(), 0.);
+    negVals.resize(thisVec.size(), 0.);
 
     // Loop over each bin in the vector
     for (UInt_t iBin = 0; iBin < thisVec.size(); iBin++) {
@@ -125,7 +126,13 @@ void CombinePosNegSeparately(vector <vector <Double_t> > errorVectors,
 
 TGraphAsymmErrors *ConstructAsymmTGraph(const TH1D* baseHist, const vector<Double_t> posVals, const vector<Double_t> negVals)
 {
+  cout << "Constructing TGraph for " << baseHist->GetName() << endl;
   TGraphAsymmErrors *graph = new TGraphAsymmErrors(baseHist);
+  if(!graph) {
+    cout<<"Graph not custructed!"<<endl;
+    assert(graph);
+  }
+
   
   for (UInt_t iBin = 0; iBin < posVals.size(); iBin++) { 
     graph->SetPointEYlow(iBin, negVals[iBin]);
@@ -133,6 +140,7 @@ TGraphAsymmErrors *ConstructAsymmTGraph(const TH1D* baseHist, const vector<Doubl
     graph->SetPointEXlow(iBin, 0);
     graph->SetPointEXhigh(iBin, 0);
   }
+  cout << "TGraph successfully constructed"<<endl;
   return graph;
 }
 
@@ -154,11 +162,13 @@ TF1* AddConstantTF1sInQuadrature(vector<TF1*> &vec, Bool_t isPosErrors) {
 
   TF1 *combinedTF1 = (TF1*) vec[0]->Clone();
   combinedTF1->SetParameter(0, quadPar);
+  return combinedTF1;
 }
 
 
 TString GetBaseName(Int_t nameIndex)
 {
+  cout<<"Getting base name"<<endl;
   vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
 			   "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
 
@@ -171,22 +181,24 @@ TString GetBaseName(Int_t nameIndex)
 }
 
 
-TH1D *GetBaseHistogram(iSys)
+TH1D *GetBaseHistogram(Int_t iSys)
 {
+  cout<<"Getting base histogram"<<endl;
   // Grab the correlation function corresponding to the index.
   // This is the default CF that uses all nominal cut values.
 
   TFile inputFile("/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-03/04-Train-SysCutChecks/CFs.root", "read");
-  TDirectory *dir = inputFile->GetDirectory("Var0/Cut1/Merged");
+  TDirectory *dir = inputFile.GetDirectory("Var0/Cut1/Merged");
 
   // get the right histogram
   TString histName = GetBaseName(iSys);
   TH1D *baseHist = (TH1D*)dir->Get(histName);
+  assert(baseHist);
   return baseHist;
 }
 
 void CombineSystematics() {
-  vector<TF1*> vecAll = GetAllTF1sFromFile("CFs.root");
+  vector<TF1*> vecAll = GetAllTF1sFromFile("/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-03/04-Train-SysCutChecks/CFs.root");
   vector< vector<TF1*> > sortedVec = SortTF1s(vecAll);
   TFile outputFile("SysErrors.root", "update");
 
@@ -198,27 +210,47 @@ void CombineSystematics() {
     outputDir = outputFile.mkdir("TopologicalSystematics");
   }
   
-  
+
   // Loop over the different cf systems
   for (UInt_t iSys = 0; iSys < sortedVec.size(); iSys++) {
     vector< vector<Double_t> > errVecs;
-
+    
     // Turn all the fits into vectors of doubles
-    for (UInt_t iFit = 0; iFit < sortedVecs[iSys].size(); iFit++) {
-      errVecs.push_back(ConvertTF1ToVector(sortedVecs[iSys][iFit]));
-    }
+    UInt_t vecSize = 0;
+    for (UInt_t iFit = 0; iFit < sortedVec[iSys].size(); iFit++) {
+      errVecs.push_back(ConvertTF1ToVector(sortedVec[iSys][iFit]));
 
+      // Make sure all the vectors are the same length
+      const UInt_t thisSize = errVecs.back().size();
+      if (iFit > 0) {
+	assert(thisSize == vecSize);
+      }
+      vecSize = thisSize;
+    }
+    
+
+    
     vector<Double_t> posVals;
     vector<Double_t> negVals;
     CombinePosNegSeparately(errVecs, posVals, negVals);
     TH1D* baseHist = GetBaseHistogram(iSys);
-    TGraphAsymmErrors graphAsymm = ConstructAsymmTGraphAtZero(baseHist, posVals, negVals);
+    if(baseHist) {
+      cout << "Found base histogram "<< baseHist->GetName() << endl;
+    } else {
+      cout << "Could not find histogram for "<< GetBaseName(iSys) << endl;
+    }
+    TGraphAsymmErrors *graphAsymm = ConstructAsymmTGraph(baseHist, posVals, negVals);
     TString graphName = GetBaseName(iSys);
     graphName += "AsymmErrors";
     outputDir->cd();
+    cout << "Writing TGraphError" << endl;
     graphAsymm->Write(graphName, TObject::kOverwrite);
     baseHist->Write(baseHist->GetName(), TObject::kOverwrite);
     cout << "Constructed and saved " << graphName << endl;
   }
+
+  // Make sure all the vectors are the same size
+  
+  
 }
 
