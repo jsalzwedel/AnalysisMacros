@@ -50,6 +50,7 @@ vector<TF1*> GetAllTF1sFromFile(TString fileName)
 
 
 
+
 vector< vector<TF1*> > SortTF1s(vector<TF1*> &vecAll)
 {
   vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
@@ -155,18 +156,18 @@ TF1* AddConstantTF1sInQuadrature(vector<TF1*> &vec, Bool_t isPosErrors) {
   combinedTF1->SetParameter(0, quadPar);
 }
 
-TString GetBaseName(const TObject *obj)
+
+TString GetBaseName(Int_t nameIndex)
 {
   vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
 			   "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
 
-  TString thisName = obj->GetName();
-  for(UInt_t iName = 0; iName < names.size(); iName++) {
-    if (thisName.Contains(names[iName])) {
-      return names[iName];
-    }
+  if (nameIndex > names.size()) {
+    cout<<"No name for index value "<< nameIndex << endl;
+    return "NoNameFound";
+  } else {
+    return names[nameIndex];
   }
-  return "NoNameFound";
 }
 
 
@@ -179,9 +180,7 @@ TH1D *GetBaseHistogram(iSys)
   TDirectory *dir = inputFile->GetDirectory("Var0/Cut1/Merged");
 
   // get the right histogram
-  vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
-			   "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
-  TString histName = names[iSys];
+  TString histName = GetBaseName(iSys);
   TH1D *baseHist = (TH1D*)dir->Get(histName);
   return baseHist;
 }
@@ -214,7 +213,7 @@ void CombineSystematics() {
     CombinePosNegSeparately(errVecs, posVals, negVals);
     TH1D* baseHist = GetBaseHistogram(iSys);
     TGraphAsymmErrors graphAsymm = ConstructAsymmTGraphAtZero(baseHist, posVals, negVals);
-    TString graphName = GetBaseName(baseHist);
+    TString graphName = GetBaseName(iSys);
     graphName += "AsymmErrors";
     outputDir->cd();
     graphAsymm->Write(graphName, TObject::kOverwrite);
