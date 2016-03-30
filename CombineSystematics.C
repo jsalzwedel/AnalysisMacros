@@ -130,7 +130,6 @@ void CombinePosNegSeparately(vector <vector <Double_t> > errorVectors,
 
 TGraphAsymmErrors *ConstructAsymmTGraph(const TH1D* baseHist, const vector<Double_t> posVals, const vector<Double_t> negVals)
 {
-  // cout << "Constructing TGraph for " << baseHist->GetName() << endl;
   TGraphAsymmErrors *graph = new TGraphAsymmErrors(baseHist);
   if(!graph) {
     cout<<"Graph not custructed!"<<endl;
@@ -139,8 +138,8 @@ TGraphAsymmErrors *ConstructAsymmTGraph(const TH1D* baseHist, const vector<Doubl
 
   // Set all errors to zero
   for(Int_t iBin = 0; iBin < graph->GetN(); iBin++) {
-    graph->SetPointEXlow(iBin, 0);
-    graph->SetPointEXhigh(iBin, 0);
+    // graph->SetPointEXlow(iBin, 0);
+    // graph->SetPointEXhigh(iBin, 0);
     graph->SetPointEYlow(iBin, 0);
     graph->SetPointEYhigh(iBin, 0);
   }
@@ -154,9 +153,6 @@ TGraphAsymmErrors *ConstructAsymmTGraph(const TH1D* baseHist, const vector<Doubl
     graph->SetPointEYhigh(iBin, posVals[iBin]);
   }
 
-  // graph->SetMar
-  
-  // cout << "TGraph successfully constructed"<<endl;
   return graph;
 }
 
