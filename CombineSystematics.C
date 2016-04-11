@@ -7,6 +7,7 @@
 // Maybe loop through the TDirectories and grab all the TF1 objects,
 // add them to a vector, and then sort them out later?
 
+enum StudyType {kNoStudy = 0, kTopStudy = 1, kAvgSepStudy = 2};
 
 void AddTF1sFromSubdirToVector(vector<TF1*> &vec, TDirectory *currentDir)
 {
@@ -41,7 +42,8 @@ vector<TF1*> GetAllTF1sFromFile(TString fileName)
   vector<TF1*> vecTF1;
   AddTF1sFromSubdirToVector(vecTF1, &inputFile);
 
-  cout<<"Found "<<vecTF1.size()<<" TF1s."<<endl;
+  cout << "Found " << vecTF1.size() << " TF1s in "
+       << fileName << endl;
 
   for (UInt_t iFit = 0; iFit < vecTF1.size(); iFit++) {
     cout<<vecTF1[iFit]->GetName()<<endl;
@@ -193,14 +195,25 @@ TString GetBaseName(Int_t nameIndex)
 }
 
 
-TH1D *GetBaseHistogram(Int_t iSys)
+TH1D *GetBaseHistogram(Int_t iSys, TString filePath, StudyType sysStudyType)
 {
   // cout<<"Getting base histogram"<<endl;
   // Grab the correlation function corresponding to the index.
   // This is the default CF that uses all nominal cut values.
 
-  TFile inputFile("/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-03/04-Train-SysCutChecks/CFs.root", "read");
-  TDirectory *dir = inputFile.GetDirectory("Var0/Cut1/Merged");
+  TFile inputFile(filePath, "read");
+
+  TString dirPath;
+  if (kTopStudy == sysStudyType) {
+    dirPath = "Var0/Cut1/Merged";
+  } else if (kAvgSepStudy == sysStudyType) {
+    dirPath = "Study0Var0/Cut1/Merged";
+  } else {
+    cout << "No systematics for this SysStudyType" << endl;
+    return NULL;
+  }
+  
+  TDirectory *dir = inputFile.GetDirectory(dirPath);
   if(!dir) {
     cout << "could not find base histogram directory" <<endl;
   }
@@ -213,17 +226,24 @@ TH1D *GetBaseHistogram(Int_t iSys)
   return baseHist;
 }
 
-void CombineSystematics() {
-  vector<TF1*> vecAll = GetAllTF1sFromFile("/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-03/04-Train-SysCutChecks/CFs.root");
+void CombineSystematics(TString filePath, StudyType sysStudyType) {
+  filePath += "/CFs.root";
+  vector<TF1*> vecAll = GetAllTF1sFromFile(filePath);
   vector< vector<TF1*> > sortedVec = SortTF1s(vecAll);
   TFile outputFile("SysErrors.root", "update");
 
 
+  TString sysStudyDir;
+  if (kTopStudy == sysStudyType) {
+    sysStudyDir = "TopologicalSystematics";
+  } else if (kAvgSepStudy == sysStudyType) {
+    sysStudyDir = "AvgSepSystematics";
+  }
 
   // TDirectory *outputDir
-  TDirectory *outputDir = outputFile.GetDirectory("TopologicalSystematics");
+  TDirectory *outputDir = outputFile.GetDirectory(sysStudyDir);
   if(!outputDir) {
-    outputDir = outputFile.mkdir("TopologicalSystematics");
+    outputDir = outputFile.mkdir(sysStudyDir);
   }
   
 
@@ -249,7 +269,7 @@ void CombineSystematics() {
     vector<Double_t> posVals;
     vector<Double_t> negVals;
     CombinePosNegSeparately(errVecs, posVals, negVals);
-    TH1D* baseHist = GetBaseHistogram(iSys);
+    TH1D* baseHist = GetBaseHistogram(iSys, filePath, sysStudyType);
     // if(baseHist) {
     //   // cout << "Found base histogram "<< baseHist->GetName() << endl;
     // } else {
