@@ -1,4 +1,6 @@
 // Description...
+enum StudyType {kNoStudy = 0, kTopStudy = 1, kAvgSepStudy = 2};
+
 
 #include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/RogerBarlowHelper.C"
 
@@ -100,14 +102,29 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
   }
 }
 
-vector<TString> GetUserVarDirectoryNames()
+vector<TString> GetUserVarDirectoryNames(StudyType type)
 {
   // These are all the directories that have cuts to compare
   vector<TString> names;
-  for(Int_t i = 1; i < 11; i++) {
-    TString thisName = "Var";
-    thisName += i;
+
+  if (kTopStudy == type) {
+    for (Int_t i = 1; i < 11; i++) {
+      TString thisName = "Var";
+      thisName += i;
+      names.push_back(thisName);
+    }
+  } else if (kAvgSepStudy == type) {
+    for (Int_t i = 0; i < 6; i++) {
+      TString thisName = "Study2Var";
+      thisName += i;
+      names.push_back(thisName);
+    }
+  } else if (kNoStudy == type) {
+    TString thisName = "Study0Var0";
     names.push_back(thisName);
+  } else {
+    cout << "No study type defined for " << type << ". Can't get diretory names."
+	 << endl;
   }
   return names;
 }
@@ -151,14 +168,14 @@ TH1D *GetHistogram(TDirectory *dir, TString subFolderName, TString histName)
   return hist;
 }
 
-void AnalyzeSystematics(Double_t acceptanceCutoff = 0.05, Bool_t useNSigmaTest = kTRUE, Double_t fitRangeLow = 0.0, Double_t fitRangeHigh = 0.4)
+void AnalyzeSystematics(Double_t acceptanceCutoff = 0.05, Bool_t useNSigmaTest = kTRUE, Double_t fitRangeLow = 0.0, Double_t fitRangeHigh = 0.4, StudyType sysStudyType = kTopStudy)
 {
   
 
   // Open CFs.root.
   TFile file("CFs.root", "update");
 
-  vector<TString> varNames = GetUserVarDirectoryNames();
+  vector<TString> varNames = GetUserVarDirectoryNames(sysStudyType);
   vector< vector<TString> > checkPairs = GetUserDirectoriesToCompare();
   vector<TString> histNames = GetUserHistNames();
 

@@ -5,8 +5,7 @@
 #include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/AnalyzeSystematics.C"
 
 
-
-void RunAllCF(Bool_t isDataCompact, Bool_t isTrainResult, Bool_t useNSigmaTest = kTRUE)
+void RunAllCF(Bool_t isDataCompact, Bool_t isTrainResult, StudyType sysStudyType, Bool_t useNSigmaTest = kTRUE)
 {
   // Project out out the signal and denominator distributions
   MakeCFProjections(isDataCompact, isTrainResult);
@@ -30,6 +29,6 @@ void RunAllCF(Bool_t isDataCompact, Bool_t isTrainResult, Bool_t useNSigmaTest =
     Double_t nSigmaCut = 2.;
     Double_t fitRangeLow = 0.0;
     Double_t fitRangeHigh = 0.2;
-    AnalyzeSystematics(nSigmaCut, useNSigmaTest, fitRangeLow, fitRangeHigh);
+    AnalyzeSystematics(nSigmaCut, useNSigmaTest, fitRangeLow, fitRangeHigh, sysStudyType);
   }
 }
