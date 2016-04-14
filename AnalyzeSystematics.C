@@ -1,7 +1,4 @@
-// Description...
-enum StudyType {kNoStudy = 0, kTopStudy = 1, kAvgSepStudy = 2};
-
-
+#include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/DefineEnums.C"
 #include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/RogerBarlowHelper.C"
 
 enum FitType {kConstant = 0, kDampHarm = 1};
@@ -196,6 +193,14 @@ void AnalyzeSystematics(Double_t acceptanceCutoff = 0.05, Bool_t useNSigmaTest =
 
   
   // Sequentially navigate to each Var directory.
+  // If more than one cut directory, grab all the relevant cut directories
+  // for making diff comparisons.
+  // Grab the correlations functions to compare in each directory.
+  // Determine a naming scheme for cut difference results.
+  // Run each matching correlation function pair through
+  // AnalyzeSystematicsForHists.
+  // Save results to "Diff" directory within Var directory
+
   for(UInt_t iVar = 0; iVar < varNames.size(); iVar++) {
     TDirectory *varDir = file.GetDirectory(varNames[iVar]);
     if(!varDir) {
@@ -234,13 +239,5 @@ void AnalyzeSystematics(Double_t acceptanceCutoff = 0.05, Bool_t useNSigmaTest =
     } // end cut pair
   } // end var directory
   
-  // If more than one cut directory, grab the pairs of cut directories
-  // that are relevant.
-  // Grab the correlations functions to compare in each directory.
-  // Determine a naming scheme for cut difference results.
-  // Run each matching correlation function pair through
-  // AnalyzeSystematicsForHists.
-  // Save results to "Systematics" directory within Var directory
-
 
 }
