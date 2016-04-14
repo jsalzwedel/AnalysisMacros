@@ -100,7 +100,7 @@ void AnalyzeSystematicsForHists(TH1D *referenceHist, TH1D *tweakHist,
   // cout<<"Analyzing result"<<endl;
 
   TString newName = referenceHist->GetName();
-  TH1D *barlowDifference = ComputeRogerBarlowDifference(referenceHist, tweakHist);
+  TH1D *barlowDifference = ComputeRogerBarlowDifference(tweakHist, referenceHist);
   barlowDifference->SetName(newName + "BarlowDifference" + nameSuffix);
   barlowDifference->SetTitle(newName + "BarlowDifference" + nameSuffix);
   barlowDifference->SetDirectory(0);
