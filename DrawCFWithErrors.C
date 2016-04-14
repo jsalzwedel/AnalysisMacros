@@ -1,4 +1,4 @@
-
+#include "DefineEnums.C"
 
 void GetAndDrawCF(TDirectory *dir, TString cfName, TString outputSuffix = "")
 {
@@ -39,11 +39,19 @@ void GetAndDrawCF(TDirectory *dir, TString cfName, TString outputSuffix = "")
 
 
 
-void DrawCFWithErrors()
+void DrawCFWithErrors(const StudyType sysStudyType)
 {
 
   TFile inputFile("SysErrors.root");
-  TString dirName = "TopologicalSystematics";
+  TString dirName;
+  if(sysStudyType == kTopStudy) {
+    dirName = "TopologicalSystematics";
+  } else if (sysStudyType == kAvgSepStudy) {
+    dirName = "AvgSepSystematics";
+  } else {
+    cout << "Not a valid Study Type!" << endl;
+    return;
+  }
   TDirectory *dir = inputFile.GetDirectory(dirName);
   if (!dir) {
     cout << "Could not find " << dirName << endl;
@@ -54,6 +62,7 @@ void DrawCFWithErrors()
 			     "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
   
   for (UInt_t iName = 0; iName < cfNames.size(); iName++) {
-    GetAndDrawCF(dir, cfNames[iName]);
+    
+    GetAndDrawCF(dir, cfNames[iName], dirName);
   }
 }
