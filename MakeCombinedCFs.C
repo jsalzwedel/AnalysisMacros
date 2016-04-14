@@ -186,7 +186,12 @@ void CombineCentralitiesForDirectory(TString pairType, TDirectory *dataDir)
 
     // Set axis ranges
     combinedCF->SetAxisRange(0.9, 1.1, "Y");
-    combinedCF->SetAxisRange(0., 1., "X");
+    combinedCF->SetAxisRange(0., .5, "X");
+    combinedCF->SetLabelSize(0.05, "X");
+    combinedCF->SetLabelSize(0.05, "Y");
+    combinedCF->SetTitleSize(0.05, "X");
+    combinedCF->SetNdivisions(505, "X");
+    combinedCF->SetNdivisions(505, "Y");
     
     cout<<"Writing combined CF "<<combinedCF->GetName()
     	<<" to "<<mergeDir->GetName()<<endl;
