@@ -246,7 +246,7 @@ void CombineSystematics(TString filePath, StudyType sysStudyType) {
     outputDir = outputFile.mkdir(sysStudyDir);
   }
   
-
+  // cout << "Looping over cf systems" << endl;
   // Loop over the different cf systems
   for (UInt_t iSys = 0; iSys < sortedVec.size(); iSys++) {
     vector< vector<Double_t> > errVecs;
