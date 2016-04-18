@@ -43,10 +43,14 @@ TH1D *CombineCFs(vector<TH1D*> cfs, vector<Double_t> counts)
   // make an averaged correlation function
   UInt_t nCFs = cfs.size();
 
-  if(nCFs < 2) {
-    cout<<"Not enough cfs in collection:\t"<<nCFs<<endl
-	<<"Cannot combine."<<endl;
+  if(nCFs == 0) {
+    cout << "No CFs found in collection. Cannot combine" << endl;
     return NULL;
+  } else if (nCFs == 1) {
+    cout<<"Only one cf found in collection."<<endl
+	<<"Cannot combine."<<endl
+	<<"Returning the found CF."<<endl;;
+    return cfs[0];
   }
   assert(nCFs == counts.size());
 
@@ -121,6 +125,11 @@ void CombineCFsInDataDir(TDirectory *f, vector<TString> dataSetNames)
     }
     // Finally, combine the CFs
     TH1D *combinedCF = CombineCFs(cfs, counts);
+    if (!combinedCF) {
+      cout << "Combine CF returned nothing. Continuing loop."
+	   <<endl;
+      continue;
+    }
     TVectorD finalCount(1);
     finalCount[0] = totalCounts;
 
@@ -175,6 +184,11 @@ void CombineCentralitiesForDirectory(TString pairType, TDirectory *dataDir)
 
     // Finally, combine the CFs
     TH1D *combinedCF = CombineCFs(cfs, counts);
+    if (!combinedCF) {
+      cout << "Combine CF returned nothing. Continuing loop."
+	   <<endl;
+      continue;
+    }
     TVectorD finalCount(1);
     finalCount[0] = totalCounts;
 
@@ -237,6 +251,11 @@ void CombineLLAAForDirectory(TDirectory *dataDir)
 
     // Finally, combine the CFs
     TH1D *combinedCF = CombineCFs(cfs, counts);
+    if (!combinedCF) {
+      cout << "Combine CF returned nothing. Continuing loop."
+	   <<endl;
+      continue;
+    }
     TVectorD finalCount(1);
     finalCount[0] = totalCounts;
 
@@ -266,7 +285,9 @@ void MakeCombinedCFs(Bool_t isDataCompact, Bool_t isTrainResult)
 
   // Get the directories for the cfs and counts
   vector<TString> dataSetNames;
-  if(!isDataCompact) {
+  if (!isTrainResult) {
+    dataSetNames.push_back("Local");
+  } else if(!isDataCompact) {
     TString dataSetNamesArr[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
     dataSetNames.assign(dataSetNamesArr, dataSetNamesArr+5);
   } else {
@@ -276,7 +297,7 @@ void MakeCombinedCFs(Bool_t isDataCompact, Bool_t isTrainResult)
   vector<TString> pairNames = {"LamLam", "ALamALam", "LamALam"};
  
   TFile cfFile("CFs.root", "update");
-  vector<TDirectory*> dataDirs = GetDataDirectories(cfFile, isTrainResult);
+  vector<TDirectory*> dataDirs = GetDataDirectories(cfFile);
 
   for(UInt_t iDir = 0; iDir < dataDirs.size(); iDir++) {
     CombineCFsInDataDir(dataDirs[iDir], dataSetNames);
