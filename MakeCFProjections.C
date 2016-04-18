@@ -165,11 +165,11 @@ void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
 
   // Generate the file name and open the file
   TString inFileName;
-  if(isTrainResult) {
+  // if(isTrainResult) {
     inFileName = "AnalysisResults" + fieldName + ".root";
-  } else {
-    inFileName = "MyOutput" + fieldName + ".root";
-  }
+  // } else {
+    // inFileName = "MyOutput" + fieldName + ".root";
+  // }
   TFile inFile(inFileName,"read");
   if (inFile.IsZombie()) {
     cout << "Error opening file " << inFileName << endl;
@@ -179,21 +179,21 @@ void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
   // Get the output TList (or TLists in the case of train results)
   vector<TList*> inputLists;
   // TList *list;
-  if(!isTrainResult) {
-    // list = (TList*)inFile.Get("MyList");
-    inputLists.push_back((TList*)inFile.Get("MyList"));
-  } else {
-    TDirectory *dir = inFile.GetDirectory("Results");
+  // if(!isTrainResult) {
+  //   // list = (TList*)inFile.Get("MyList");
+  //   inputLists.push_back((TList*)inFile.Get("MyList"));
+  // } else {
+  TDirectory *dir = inFile.GetDirectory("Results");
 
-    // Iterate over contents of directory and get all the TLists
-    TIter nextkey(dir->GetListOfKeys());
-    TKey *key;
-    while ((key = (TKey*)nextkey())){
-      TList *list = dynamic_cast<TList*>(key->ReadObj());
-      if(!list) continue;
-      inputLists.push_back(list);
-    }
+  // Iterate over contents of directory and get all the TLists
+  TIter nextkey(dir->GetListOfKeys());
+  TKey *key;
+  while ((key = (TKey*)nextkey())){
+    TList *list = dynamic_cast<TList*>(key->ReadObj());
+    if(!list) continue;
+    inputLists.push_back(list);
   }
+  // }
 
   for(UInt_t iList = 0; iList < inputLists.size(); iList++) {
     TString outputDataName;
@@ -221,14 +221,17 @@ void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
 
 void MakeCFProjections(Bool_t isDataCompact, Bool_t isTrainResult)
 {
-  if(!isDataCompact) {
+  if (!isTrainResult) {
+    TString fileSuffix = "Local";
+    MakeCFProjectionForDataSet(fileSuffix, isTrainResult);
+  } else if (!isDataCompact) {
     TString fieldNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
-    for(Int_t i = 0; i < 5; i++) {
+    for (Int_t i = 0; i < 5; i++) {
       MakeCFProjectionForDataSet(fieldNamesReal[i], isTrainResult);
     }
   } else {
     TString fieldNamesMC[2] = {"mm", "pp"};
-    for(Int_t i = 0; i < 2; i++) {
+    for (Int_t i = 0; i < 2; i++) {
       MakeCFProjectionForDataSet(fieldNamesMC[i], isTrainResult);
     }
   }
