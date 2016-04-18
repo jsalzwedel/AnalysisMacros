@@ -30,8 +30,16 @@ void GetAndDrawCF(TDirectory *dir, TString cfName, TString outputSuffix = "")
   hist->Draw();
   errors->Draw("E2");
 
-  TString outputName = "Plots/";
-  outputName = outputName + cfName + outputSuffix;
+  // Check if system directory for output exists.
+  // If it doesn't, make it.
+  // Then save plots into that directory.
+  TString outputBashDir = "Plots/" + outputSuffix;
+  if (!gSystem->OpenDirectory(outputBashDir)) {
+    gSystem->mkdir(outputBashDir, kTRUE);
+  }
+  
+  TString outputName = outputBashDir + "/" + cfName + outputSuffix;
+  // outputName = outputName + cfName + outputSuffix;
   c1.SaveAs(outputName + ".png");
   c1.SaveAs(outputName + ".eps");
   c1.SaveAs(outputName + ".pdf");
