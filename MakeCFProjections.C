@@ -157,7 +157,7 @@ void RunOverTList(TList *list, TString dataName, TString fieldName)
 }
 
 
-void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
+void MakeCFProjectionForDataSet(TString fieldName)
 {
   // Make all the numerator and denominator projections for one data set
   // and save them to a root file in their own directory.
@@ -165,11 +165,7 @@ void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
 
   // Generate the file name and open the file
   TString inFileName;
-  // if(isTrainResult) {
-    inFileName = "AnalysisResults" + fieldName + ".root";
-  // } else {
-    // inFileName = "MyOutput" + fieldName + ".root";
-  // }
+  inFileName = "AnalysisResults" + fieldName + ".root";
   TFile inFile(inFileName,"read");
   if (inFile.IsZombie()) {
     cout << "Error opening file " << inFileName << endl;
@@ -178,11 +174,6 @@ void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
 
   // Get the output TList (or TLists in the case of train results)
   vector<TList*> inputLists;
-  // TList *list;
-  // if(!isTrainResult) {
-  //   // list = (TList*)inFile.Get("MyList");
-  //   inputLists.push_back((TList*)inFile.Get("MyList"));
-  // } else {
   TDirectory *dir = inFile.GetDirectory("Results");
 
   // Iterate over contents of directory and get all the TLists
@@ -197,13 +188,11 @@ void MakeCFProjectionForDataSet(TString fieldName, Bool_t isTrainResult)
 
   for(UInt_t iList = 0; iList < inputLists.size(); iList++) {
     TString outputDataName;
-    if(isTrainResult) {
-      TString listName = inputLists[iList]->GetName();
-      if(listName.Contains("MyList")) {
-	// Remove the "MyList" characters
-	TString subName = listName.Remove(0,6);
-	outputDataName += subName;
-      }
+    TString listName = inputLists[iList]->GetName();
+    if(listName.Contains("MyList")) {
+      // Remove the "MyList" characters
+      TString subName = listName.Remove(0,6);
+      outputDataName += subName;
     }
     cout<<"Projecting out "<<outputDataName<<" for "<<fieldName<<endl;
     RunOverTList(inputLists[iList], outputDataName, fieldName);
@@ -223,16 +212,16 @@ void MakeCFProjections(Bool_t isDataCompact, Bool_t isTrainResult)
 {
   if (!isTrainResult) {
     TString fileSuffix = "Local";
-    MakeCFProjectionForDataSet(fileSuffix, isTrainResult);
+    MakeCFProjectionForDataSet(fileSuffix);
   } else if (!isDataCompact) {
     TString fieldNamesReal[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
     for (Int_t i = 0; i < 5; i++) {
-      MakeCFProjectionForDataSet(fieldNamesReal[i], isTrainResult);
+      MakeCFProjectionForDataSet(fieldNamesReal[i]);
     }
   } else {
     TString fieldNamesMC[2] = {"mm", "pp"};
     for (Int_t i = 0; i < 2; i++) {
-      MakeCFProjectionForDataSet(fieldNamesMC[i], isTrainResult);
+      MakeCFProjectionForDataSet(fieldNamesMC[i]);
     }
   }
 }

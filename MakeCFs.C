@@ -135,7 +135,9 @@ void MakeCFs(Bool_t isDataCompact, Bool_t isTrainResult,
   TFile f("CFs.root", "update");
 
   vector<TString> dataNames;
-  if(!isDataCompact) {
+  if (!isTrainResult) {
+    dataNames.push_back("Local");
+  } else if(!isDataCompact) {
     TString dataNamesArr[5] = {"mm1", "mm2", "mm3", "pp1", "pp2"};
     dataNames.assign(dataNamesArr, dataNamesArr+5);
   } else {
@@ -143,7 +145,7 @@ void MakeCFs(Bool_t isDataCompact, Bool_t isTrainResult,
     dataNames.assign(dataNamesArr, dataNamesArr+2);
   }
   
-  vector<TDirectory*> dataDirs = GetDataDirectories(f, isTrainResult);
+  vector<TDirectory*> dataDirs = GetDataDirectories(f);
  
   //Now make the CFs for each data and field directory
   for(UInt_t iDir = 0; iDir < dataDirs.size(); iDir++) {

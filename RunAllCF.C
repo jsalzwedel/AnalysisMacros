@@ -21,7 +21,7 @@ void RunAllCF(Bool_t isDataCompact, Bool_t isTrainResult, StudyType sysStudyType
 
   // Rebin the numerator and denominator distributions
   // for use with log fitting
-  RebinNumDen(isDataCompact, isTrainResult, rebinNumber);
+  RebinNumDen(isDataCompact, rebinNumber);
 
   if(isTrainResult) {
     // Compute systematic differences between cuts and fit

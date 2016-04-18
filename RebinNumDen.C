@@ -74,10 +74,10 @@ void RebinNumDenInDirectory(TDirectory *dataDir, Bool_t isDataCompact, Int_t reb
   }
 }
 
-void RebinNumDen(Bool_t isDataCompact, Bool_t isTrainResult, Int_t rebinNumber)
+void RebinNumDen(Bool_t isDataCompact, Int_t rebinNumber)
 {
   TFile cfFile("CFs.root", "update");
-  vector<TDirectory*> dataDirs = GetDataDirectories(cfFile, isTrainResult);
+  vector<TDirectory*> dataDirs = GetDataDirectories(cfFile);
 
   for(UInt_t iDir = 0; iDir < dataDirs.size(); iDir++) {
     RebinNumDenInDirectory(dataDirs[iDir], isDataCompact, rebinNumber);
