@@ -3,7 +3,7 @@
 // Take the ratio of C1error^2 / C2error^2 to find relative statistics
 // Plot result in histogram.
 
-void CompareErrorSizes(TH1D *h1, TH1D *h2)
+void GetHistsAndCompareErrors(TH1D *h1, TH1D *h2)
 {
 
   TString newName = h1->GetName();
@@ -11,7 +11,7 @@ void CompareErrorSizes(TH1D *h1, TH1D *h2)
   TH1D *histRelative = (TH1D*) h1->Clone(newName);
   histRelative->Reset();
   histRelative->SetTitle(newName);
-  histRelative->SetAxisRange(0., 3., "Y");
+  histRelative->SetAxisRange(0.5, 1.5, "Y");
 
   if (h1->GetNbinsX() != h2->GetNbinsX()) {
     cout << "Histograms do not have the same number of bins. Cannot continue"
@@ -35,7 +35,29 @@ void CompareErrorSizes(TH1D *h1, TH1D *h2)
   histRelative->Write(histRelative->GetName(), TObject::kOverwrite);
 }
 
-void GetHistsAndCompare()
+void GetHistsAndCompareHists(TH1D *h1, TH1D *h2)
+{
+
+  if (h1->GetNbinsX() != h2->GetNbinsX()) {
+    cout << "Histograms do not have the same number of bins. Cannot continue"
+	 << endl;
+    return;
+  }
+  
+  TString newName = h1->GetName();
+  newName += "Ratio";
+  TH1D *histRatio = (TH1D*) h1->Clone(newName);
+  histRatio->Divide(h2);
+  histRatio->SetTitle(newName);
+  histRatio->SetAxisRange(0.5, 1.5, "Y");
+
+  TFile outputFile ("RelativeStatistics.root", "update");
+  outputFile.cd();
+  histRatio->Write(histRatio->GetName(), TObject::kOverwrite);
+
+}
+
+void CompareErrorSizes()
 {
   TFile file1("/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-04/08-Train-TTCSys/CFs.root");
   TFile file2("/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-03/04-Train-SysCutChecks/CFs.root");
@@ -56,6 +78,7 @@ void GetHistsAndCompare()
       cout << "Could not find hist2" << endl;
       return;
     }
-    CompareErrorSizes(hist1, hist2);
+    GetHistsAndCompareErrors(hist1, hist2);
+    GetHistsAndCompareHists(hist1, hist2);
   }
 }
