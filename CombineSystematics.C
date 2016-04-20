@@ -146,7 +146,7 @@ void FindMaximumPosNegValues(vector <vector <Double_t> > errorVectors,
   // Grab an error vector
   for (UInt_t iErrVec = 0; iErrVec < errorVectors.size(); iErrVec++) {
     vector<Double_t> &thisVec = errorVectors[iErrVec];
-
+    
     // Loop over each bin in the vector
     for (UInt_t iBin = 0; iBin < thisVec.size(); iBin++) {
       Double_t errVal = thisVec[iBin];
@@ -155,7 +155,7 @@ void FindMaximumPosNegValues(vector <vector <Double_t> > errorVectors,
       // then add in quadrature
       if (errVal > 0) {
 	if (posVals[iBin] < fabs(errVal)) {
-	  posVals[iBind] = fabs(errVal);
+	  posVals[iBin] = fabs(errVal);
 	}
       } else {
 	if (negVals[iBin] < fabs(errVal)) {
