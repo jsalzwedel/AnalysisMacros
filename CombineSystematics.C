@@ -264,29 +264,18 @@ void CombineSystematics(TString filePath, StudyType sysStudyType) {
       vecSize = thisSize;
     }
     
-
-    
     vector<Double_t> posVals;
     vector<Double_t> negVals;
     CombinePosNegSeparately(errVecs, posVals, negVals);
     TH1D* baseHist = GetBaseHistogram(iSys, filePath, sysStudyType);
-    // if(baseHist) {
-    //   // cout << "Found base histogram "<< baseHist->GetName() << endl;
-    // } else {
-    //   cout << "Could not find histogram for "<< GetBaseName(iSys) << endl;
-    // }
     TGraphAsymmErrors *graphAsymm = ConstructAsymmTGraph(baseHist, posVals, negVals);
     TString graphName = GetBaseName(iSys);
     graphName += "AsymmErrors";
+    graphAsymm->SetName(graphName);
+    graphAsymm->SetTitle(graphName);
     outputDir->cd();
-    // cout << "Writing TGraphError" << endl;
     graphAsymm->Write(graphName, TObject::kOverwrite);
     baseHist->Write(baseHist->GetName(), TObject::kOverwrite);
-    // cout << "Constructed and saved " << graphName << endl;
   }
-
-  // Make sure all the vectors are the same size
-  
-  
 }
 

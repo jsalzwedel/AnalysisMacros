@@ -55,7 +55,7 @@ void WriteResults(TGraphAsymmErrors *errors, TH1D *hist, TDirectory *outDir)
   hist->Draw();
   errors->Draw("E2");
 
-  TString outputName = outputBashDir + "/" + histName;
+  TString outputName = outputBashDir + "/" + histName + "CombinedSystematics";
   c1.SaveAs(outputName + ".png");
   c1.SaveAs(outputName + ".eps");
   c1.SaveAs(outputName + ".pdf");
