@@ -57,6 +57,8 @@ vector<TF1*> GetAllTF1sFromFile(TString fileName)
 
 vector< vector<TF1*> > SortTF1s(vector<TF1*> &vecAll)
 {
+  // Make a different vector for each system, and
+  // add the respective TF1s to those vectors
   cout << "Sorting error TF1s" << endl;
   vector<TString> names = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
 			   "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
@@ -101,11 +103,12 @@ void CombinePosNegSeparately(vector <vector <Double_t> > errorVectors,
   // in quadrature
   // cout << "Combining error vectors" << endl;
 
+  posVals.resize(errorVectors[0].size(), 0.);
+  negVals.resize(errorVectors[0].size(), 0.);
+
   // Grab an error vector
   for (UInt_t iErrVec = 0; iErrVec < errorVectors.size(); iErrVec++) {
     vector<Double_t> &thisVec = errorVectors[iErrVec];
-    posVals.resize(thisVec.size(), 0.);
-    negVals.resize(thisVec.size(), 0.);
 
     // Loop over each bin in the vector
     for (UInt_t iBin = 0; iBin < thisVec.size(); iBin++) {
@@ -127,6 +130,39 @@ void CombinePosNegSeparately(vector <vector <Double_t> > errorVectors,
     posVals[iBin] = sqrt(posVals[iBin]);
     negVals[iBin] = sqrt(negVals[iBin]);
     // negVals[iBin] *= -1.;
+  } 
+}
+
+void FindMaximumPosNegValues(vector <vector <Double_t> > errorVectors,
+			     vector<Double_t> &posVals,
+			     vector<Double_t> &negVals)
+{
+  // Take all the error vectors. For each bin,
+  // find and save the maximum values (pos and neg).
+
+  posVals.resize(errorVectors[0].size(), 0.);
+  negVals.resize(errorVectors[0].size(), 0.);
+
+  // Grab an error vector
+  for (UInt_t iErrVec = 0; iErrVec < errorVectors.size(); iErrVec++) {
+    vector<Double_t> &thisVec = errorVectors[iErrVec];
+
+    // Loop over each bin in the vector
+    for (UInt_t iBin = 0; iBin < thisVec.size(); iBin++) {
+      Double_t errVal = thisVec[iBin];
+
+      // Decide whether to add to posVec or negVec,
+      // then add in quadrature
+      if (errVal > 0) {
+	if (posVals[iBin] < fabs(errVal)) {
+	  posVals[iBind] = fabs(errVal);
+	}
+      } else {
+	if (negVals[iBin] < fabs(errVal)) {
+	  negVals[iBin] = fabs(errVal);
+	}
+      }
+    }
   } 
 }
 
@@ -216,6 +252,7 @@ TH1D *GetBaseHistogram(Int_t iSys, TString filePath, StudyType sysStudyType)
   TDirectory *dir = inputFile.GetDirectory(dirPath);
   if(!dir) {
     cout << "could not find base histogram directory" <<endl;
+    return NULL;
   }
   // get the right histogram
   TString histName = GetBaseName(iSys);
@@ -226,28 +263,28 @@ TH1D *GetBaseHistogram(Int_t iSys, TString filePath, StudyType sysStudyType)
   return baseHist;
 }
 
-void CombineSystematics(TString filePath, StudyType sysStudyType) {
+void CombineSystematicsForStudy(TString filePath, StudyType sysStudyType, Bool_t shouldAddInQuad) {
   filePath += "/CFs.root";
+
+  // Get and sort all the error histograms
   vector<TF1*> vecAll = GetAllTF1sFromFile(filePath);
   vector< vector<TF1*> > sortedVec = SortTF1s(vecAll);
+
+  // Setup the output directory
   TFile outputFile("SysErrors.root", "update");
-
-
   TString sysStudyDir;
   if (kTopStudy == sysStudyType) {
     sysStudyDir = "TopologicalSystematics";
   } else if (kAvgSepStudy == sysStudyType) {
     sysStudyDir = "AvgSepSystematics";
   }
-
-  // TDirectory *outputDir
   TDirectory *outputDir = outputFile.GetDirectory(sysStudyDir);
   if(!outputDir) {
     outputDir = outputFile.mkdir(sysStudyDir);
   }
   
-  // cout << "Looping over cf systems" << endl;
-  // Loop over the different cf systems
+  // Loop over each cf system and combine
+  // the errors for that system
   for (UInt_t iSys = 0; iSys < sortedVec.size(); iSys++) {
     vector< vector<Double_t> > errVecs;
     
@@ -263,10 +300,16 @@ void CombineSystematics(TString filePath, StudyType sysStudyType) {
       }
       vecSize = thisSize;
     }
-    
+
+    // Combine the errors and store them into posVals and negVals
     vector<Double_t> posVals;
     vector<Double_t> negVals;
-    CombinePosNegSeparately(errVecs, posVals, negVals);
+    if (shouldAddInQuad) {
+      CombinePosNegSeparately(errVecs, posVals, negVals);
+    } else {
+      FindMaximumPosNegValues(errVecs, posVals, negVals);
+    }
+    // Make and output the TGraphAsymmErrors
     TH1D* baseHist = GetBaseHistogram(iSys, filePath, sysStudyType);
     TGraphAsymmErrors *graphAsymm = ConstructAsymmTGraph(baseHist, posVals, negVals);
     TString graphName = GetBaseName(iSys);
@@ -279,3 +322,12 @@ void CombineSystematics(TString filePath, StudyType sysStudyType) {
   }
 }
 
+void CombineSystematics(Bool_t shouldAddInQuad) {
+
+  TString filePathTop = "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-03/04-Train-SysCutChecks";
+  CombineSystematicsForStudy(filePathTop, kTopStudy, shouldAddInQuad);
+
+  TString filePathAvgSep = "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-04/08-Train-TTCSys";
+  CombineSystematicsForStudy(filePathTop, kAvgSepStudy, shouldAddInQuad);
+
+}
