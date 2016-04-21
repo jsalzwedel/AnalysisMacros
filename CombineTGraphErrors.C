@@ -1,7 +1,7 @@
 
 
 
-TGraphAsymmErrors* CombineTwoTGraphAsymm(TGraphAsymmErrors *graph1, TGraphAsymmErrors *graph2, TH1D *baseHist)
+TGraphAsymmErrors* CombineTwoTGraphAsymm(TGraphAsymmErrors *graph1, TGraphAsymmErrors *graph2, TH1D *baseHist, Bool_t shouldAddQuadrature)
 {
 
   if (!graph1 || !graph2 || !baseHist) {
@@ -14,13 +14,32 @@ TGraphAsymmErrors* CombineTwoTGraphAsymm(TGraphAsymmErrors *graph1, TGraphAsymmE
 
   // Loop over the bins and combine the errors
   for (Int_t iBin = 0; iBin < combinedGraph->GetN(); iBin++) {
-    Double_t errYHigh = pow(graph1->GetErrorYhigh(iBin), 2);
-    errYHigh += pow(graph2->GetErrorYhigh(iBin), 2);
-    errYHigh = sqrt(errYHigh);
+    Double_t errYHigh = 0;
+    Double_t errYLow = 0;
+    if (shouldAddQuadrature) {
+      // Add the errors in quadrature
+      errYHigh = pow(graph1->GetErrorYhigh(iBin), 2);
+      errYHigh += pow(graph2->GetErrorYhigh(iBin), 2);
+      errYHigh = sqrt(errYHigh);
 
-    Double_t errYLow = pow(graph1->GetErrorYlow(iBin), 2);
-    errYLow += pow(graph2->GetErrorYlow(iBin), 2);
-    errYLow = sqrt(errYLow);
+      errYLow = pow(graph1->GetErrorYlow(iBin), 2);
+      errYLow += pow(graph2->GetErrorYlow(iBin), 2);
+      errYLow = sqrt(errYLow);
+    } else {
+      // Just take the largest value for the bin
+      if (errYHigh < graph1->GetErrorYhigh(iBin)) {
+	errYHigh = graph1->GetErrorYhigh(iBin);
+      }
+      if (errYHigh < graph2->GetErrorYhigh(iBin)) {
+	errYHigh = graph2->GetErrorYhigh(iBin);
+      }
+      if (errYLow < graph1->GetErrorYlow(iBin)) {
+	errYLow = graph1->GetErrorYlow(iBin);
+      }
+      if (errYLow < graph2->GetErrorYlow(iBin)) {
+	errYLow = graph2->GetErrorYlow(iBin);
+      }
+    }
 
     combinedGraph->SetPointEYhigh(iBin, errYHigh);
     combinedGraph->SetPointEYlow(iBin, errYLow);
@@ -28,16 +47,25 @@ TGraphAsymmErrors* CombineTwoTGraphAsymm(TGraphAsymmErrors *graph1, TGraphAsymmE
   return combinedGraph;
 }
 
-void WriteResults(TGraphAsymmErrors *errors, TH1D *hist, TDirectory *outDir)
+void WriteResults(TGraphAsymmErrors *errors, TH1D *hist, TDirectory *outDir, Bool_t shouldAddQuadrature)
 {
   outDir->cd();
   TString histName = hist->GetName();
   TString graphName = histName + "CombinedErrors";
+
+  TString errorCombinationType;
+  if (shouldAddQuadrature) {
+    errorCombinationType += "Quadrature";
+  } else {
+    errorCombinationType += "Maximum";
+  }
+  graphName += errorCombinationType;
   errors->Write(graphName, TObject::kOverwrite);
   hist->Write(histName, TObject::kOverwrite);
 
   // Save plots in all the necessary formats
   TString outputBashDir = "Plots/CombinedSys";
+  outputBashDir += errorCombinationType;
   if (!gSystem->OpenDirectory(outputBashDir)) {
     gSystem->mkdir(outputBashDir, kTRUE);
   }
@@ -56,12 +84,13 @@ void WriteResults(TGraphAsymmErrors *errors, TH1D *hist, TDirectory *outDir)
   errors->Draw("E2");
 
   TString outputName = outputBashDir + "/" + histName + "CombinedSystematics";
+  outputName += errorCombinationType;
   c1.SaveAs(outputName + ".png");
   c1.SaveAs(outputName + ".eps");
   c1.SaveAs(outputName + ".pdf");
 }
 
-void CombineTGraphsFromTwoDirectories(TDirectory *dir1, TDirectory *dir2, Int_t iBaseDir, TDirectory *outputDir)
+void CombineTGraphsFromTwoDirectories(TDirectory *dir1, TDirectory *dir2, Int_t iBaseDir, TDirectory *outputDir, Bool_t shouldAddQuadrature)
 {
 
   // Gather TGraphErrors from 1st directory
@@ -125,13 +154,13 @@ void CombineTGraphsFromTwoDirectories(TDirectory *dir1, TDirectory *dir2, Int_t 
       continue;
     }
 
-    TGraphAsymmErrors* combinedGraph = CombineTwoTGraphAsymm(graphsDir1[iGraph], graphsDir2[iGraph], baseHists[iGraph]);
-    WriteResults(combinedGraph, baseHists[iGraph], outputDir);
+    TGraphAsymmErrors* combinedGraph = CombineTwoTGraphAsymm(graphsDir1[iGraph], graphsDir2[iGraph], baseHists[iGraph], shouldAddQuadrature);
+    WriteResults(combinedGraph, baseHists[iGraph], outputDir, shouldAddQuadrature);
   }
 }
 
 
-void CombineTGraphErrors()
+void CombineTGraphErrors(Bool_t shouldAddQuadrature)
 {
   TFile file("SysErrors.root", "Update");
   TDirectory *dir1 = file.GetDirectory("TopologicalSystematics");
@@ -145,7 +174,7 @@ void CombineTGraphErrors()
     outputDir = file.mkdir(combinedDirName);
   }
   
-  CombineTGraphsFromTwoDirectories(dir1, dir2, indexBaseDir, outputDir);
+  CombineTGraphsFromTwoDirectories(dir1, dir2, indexBaseDir, outputDir, shouldAddQuadrature);
 }
 
 
