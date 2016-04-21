@@ -7,7 +7,7 @@
 // Maybe loop through the TDirectories and grab all the TF1 objects,
 // add them to a vector, and then sort them out later?
 
-enum StudyType {kNoStudy = 0, kTopStudy = 1, kAvgSepStudy = 2};
+#include "DefineEnums.C"
 
 void AddTF1sFromSubdirToVector(vector<TF1*> &vec, TDirectory *currentDir)
 {
@@ -102,7 +102,11 @@ void CombinePosNegSeparately(vector <vector <Double_t> > errorVectors,
   // values in quadrature, and combine all the negative values
   // in quadrature
   // cout << "Combining error vectors" << endl;
-
+  
+  if (errorVectors.size() < 1) {
+    return;
+  }
+  
   posVals.resize(errorVectors[0].size(), 0.);
   negVals.resize(errorVectors[0].size(), 0.);
 
@@ -139,14 +143,16 @@ void FindMaximumPosNegValues(vector <vector <Double_t> > errorVectors,
 {
   // Take all the error vectors. For each bin,
   // find and save the maximum values (pos and neg).
-
+  
+  if (errorVectors.size() < 1) {
+    return;
+  }
+  
   posVals.resize(errorVectors[0].size(), 0.);
   negVals.resize(errorVectors[0].size(), 0.);
-
   // Grab an error vector
   for (UInt_t iErrVec = 0; iErrVec < errorVectors.size(); iErrVec++) {
     vector<Double_t> &thisVec = errorVectors[iErrVec];
-    
     // Loop over each bin in the vector
     for (UInt_t iBin = 0; iBin < thisVec.size(); iBin++) {
       Double_t errVal = thisVec[iBin];
@@ -163,11 +169,12 @@ void FindMaximumPosNegValues(vector <vector <Double_t> > errorVectors,
 	}
       }
     }
-  } 
+  }
 }
 
 TGraphAsymmErrors *ConstructAsymmTGraph(const TH1D* baseHist, const vector<Double_t> posVals, const vector<Double_t> negVals)
 {
+  cout << "Constructing TGraph" << endl;
   TGraphAsymmErrors *graph = new TGraphAsymmErrors(baseHist);
   if(!graph) {
     cout<<"Graph not custructed!"<<endl;
@@ -238,7 +245,6 @@ TH1D *GetBaseHistogram(Int_t iSys, TString filePath, StudyType sysStudyType)
   // This is the default CF that uses all nominal cut values.
 
   TFile inputFile(filePath, "read");
-
   TString dirPath;
   if (kTopStudy == sysStudyType) {
     dirPath = "Var0/Cut1/Merged";
@@ -251,14 +257,16 @@ TH1D *GetBaseHistogram(Int_t iSys, TString filePath, StudyType sysStudyType)
   
   TDirectory *dir = inputFile.GetDirectory(dirPath);
   if(!dir) {
-    cout << "could not find base histogram directory" <<endl;
+    cout << "could not find base histogram directory at "
+	 << dirPath << endl;
     return NULL;
   }
   // get the right histogram
   TString histName = GetBaseName(iSys);
   TH1D *baseHist = (TH1D*)dir->Get(histName);
-  baseHist->SetDirectory(0);
   assert(baseHist);
+
+  baseHist->SetDirectory(0);
   // cout<<"We have found the histogram"<<endl;
   return baseHist;
 }
@@ -312,14 +320,21 @@ void CombineSystematicsForStudy(TString filePath, StudyType sysStudyType, Bool_t
     // Make and output the TGraphAsymmErrors
     TH1D* baseHist = GetBaseHistogram(iSys, filePath, sysStudyType);
     TGraphAsymmErrors *graphAsymm = ConstructAsymmTGraph(baseHist, posVals, negVals);
+
+    cout << "Writing TGraph ";
     TString graphName = GetBaseName(iSys);
+    cout << "with name " << graphName << endl;
     graphName += "AsymmErrors";
     graphAsymm->SetName(graphName);
     graphAsymm->SetTitle(graphName);
     outputDir->cd();
     graphAsymm->Write(graphName, TObject::kOverwrite);
     baseHist->Write(baseHist->GetName(), TObject::kOverwrite);
+    // graphAsymm->SetDirectory(0);
+    baseHist->SetDirectory(0);
+    cout << "Finished writing for system " << iSys << endl;
   }
+  cout << "All done combining systematics for this study" << endl;
 }
 
 void CombineSystematics(Bool_t shouldAddInQuad) {
@@ -328,6 +343,6 @@ void CombineSystematics(Bool_t shouldAddInQuad) {
   CombineSystematicsForStudy(filePathTop, kTopStudy, shouldAddInQuad);
 
   TString filePathAvgSep = "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-04/08-Train-TTCSys";
-  CombineSystematicsForStudy(filePathTop, kAvgSepStudy, shouldAddInQuad);
+  CombineSystematicsForStudy(filePathAvgSep, kAvgSepStudy, shouldAddInQuad);
 
 }
