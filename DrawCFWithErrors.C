@@ -1,6 +1,6 @@
 #include "DefineEnums.C"
 
-void GetAndDrawCF(TDirectory *dir, TString cfName, TString outputSuffix = "")
+void GetAndDrawCF(TDirectory *dir, TString cfName, TString dirSuffix = "")
 {
   TH1D *hist = (TH1D*)dir->Get(cfName);
   if(!hist) {
@@ -33,13 +33,13 @@ void GetAndDrawCF(TDirectory *dir, TString cfName, TString outputSuffix = "")
   // Check if system directory for output exists.
   // If it doesn't, make it.
   // Then save plots into that directory.
-  TString outputBashDir = "Plots/" + outputSuffix;
+  TString outputBashDir = "Plots/" + dirSuffix;
   if (!gSystem->OpenDirectory(outputBashDir)) {
     gSystem->mkdir(outputBashDir, kTRUE);
   }
   
-  TString outputName = outputBashDir + "/" + cfName + outputSuffix;
-  // outputName = outputName + cfName + outputSuffix;
+  TString outputName = outputBashDir + "/" + cfName + dirSuffix;
+  // outputName = outputName + cfName + dirSuffix;
   c1.SaveAs(outputName + ".png");
   c1.SaveAs(outputName + ".eps");
   c1.SaveAs(outputName + ".pdf");
@@ -47,7 +47,7 @@ void GetAndDrawCF(TDirectory *dir, TString cfName, TString outputSuffix = "")
 
 
 
-void DrawCFWithErrors(const StudyType sysStudyType)
+void DrawCFWithErrors(const StudyType sysStudyType, Bool_t isAddedQuadrature)
 {
 
   TFile inputFile("SysErrors.root");
@@ -66,9 +66,15 @@ void DrawCFWithErrors(const StudyType sysStudyType)
     return;
   }
 
+
   vector<TString> cfNames = {"CFLamALam010", "CFLamALam1030", "CFLamALam3050",
 			     "CFLLAA010", "CFLLAA1030", "CFLLAA3050"};
-  
+  if (isAddedQuadrature) {
+    dirName += "Quadrature";
+  } else {
+    dirName += "Maximum";
+  }
+		    
   for (UInt_t iName = 0; iName < cfNames.size(); iName++) {
     
     GetAndDrawCF(dir, cfNames[iName], dirName);
