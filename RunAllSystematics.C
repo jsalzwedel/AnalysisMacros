@@ -1,6 +1,7 @@
 #include "AnalyzeSystematics.C"
 #include "CombineSystematics.C"
 #include "DrawCFWithErrors.C"
+#include "CombineTGraphErrors.C"
 #include "DefineEnums.C"
 
 void FinalizeSystematics(Bool_t shouldAddInQuad) {
@@ -17,4 +18,5 @@ void FinalizeSystematics(Bool_t shouldAddInQuad) {
   CombineSystematics(shouldAddInQuad);
   DrawCFWithErrors(kTopStudy, shouldAddInQuad);
   DrawCFWithErrors(kAvgSepStudy, shouldAddInQuad);
+  CombineTGraphErrors(shouldAddInQuad);
 }
