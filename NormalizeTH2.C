@@ -51,6 +51,7 @@ TH2 *NormalizeTH2(TH2* hist, TString optionAxis)
             }
         }
     }
+    normHist->SetDirectory(0);
     return normHist;
 }
 
@@ -79,37 +80,23 @@ void NormalizeMatricesInDir(TDirectory *inDir, TDirectory *outDir, TString axis)
     TIter histIter(inDir->GetListOfKeys());
     TObject *obj = NULL;
     while ((obj = histIter())) {
-        cout << "Trying to find TH2" << endl;
         TKey *histKey = dynamic_cast<TKey*>(obj);
+        TObject *obj = histKey->ReadObj();
         TH2 *hist = dynamic_cast<TH2*>(histKey->ReadObj());
-        if (!hist) {
+        if (!(hist->Class()->InheritsFrom(TH2::Class()))) {
             cout << "Object could not be cast into a TH2" << endl;
             continue;
         }
-
         TH2 *normHist = NormalizeTH2(hist, axis);
-        normHist->DrawCopy();
         outDir->cd();
         normHist->Write(normHist->GetName(), TObject::kOverwrite);
         cout << "Wrote " << normHist->GetName() << " to " << outDir->GetName()
              << endl;
     }
+    cout << "All matrices in directory have been normalized." << endl;
 }
 
-void DoResMatrixNormalizations()
-{
-    DoMatrixNormalizations("MomentumResolutionMatrices.root", "Rebinned",
-                            "Normalized", "X");
-}
 
-void DoTransformMatrixNormalizations()
-{
-    TFile matrixFile("PreparedTransformMatrices.root");
-    DoMatrixNormalizations("PreparedTransformMatrices.root", "",
-                            "Normalized", "Y");
-
-
-}
 
 void DoMatrixNormalizations(TString fileName, TString inputDirName,
                             TString outputDirName, TString axisName)
@@ -129,4 +116,41 @@ void DoMatrixNormalizations(TString fileName, TString inputDirName,
 
     NormalizeMatricesInDir(inDir, outDir, axisName);
 
+}
+
+
+void DoResMatrixNormalizations()
+{
+    DoMatrixNormalizations("MomentumResolutionMatrices.root", "Rebinned",
+                            "Normalized", "X");
+}
+
+void DoTransformMatrixNormalizations()
+{
+    TString fileName = "PreparedTransformMatrices.root";
+    // DoMatrixNormalizations(fileName, "",
+    //                         "Normalized", "Y");
+
+
+    TFile matrixFile(fileName,"read");
+
+    // TDirectory *inDir = matrixFile.GetDirectory(inputDirName);
+    // if (!inDir) {
+    //     cout << "Could not find directory of files to rebin" << endl;
+    //     return;
+    // }
+
+    TString outputFileName = "NormalizedTransformMatrices.root";
+    TFile outFile(outputFileName, "update");
+    TString outputDirName = "Normalized";
+    TString axisName = "Y";
+
+    TDirectory *outDir = outFile.GetDirectory(outputDirName);
+    if (!outDir) {
+        outDir = outFile.mkdir(outputDirName);
+    }
+
+    NormalizeMatricesInDir(&matrixFile, outDir, axisName);
+
+    cout << "Normalizations finished" << endl;
 }
