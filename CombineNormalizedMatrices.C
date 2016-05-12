@@ -44,16 +44,7 @@ TMatrix GetCombinedMatrix(TMatrix &residualMat, TMatrix &resolutionMat)
 {
     cout << "GetCombinedMatrix Begin" << endl;
     TMatrix combinedMatrix(residualMat.GetNrows(), residualMat.GetNcols());
-    // if(!resolutionMat || !residualMat) {
-    //     cout << "Component matrix does not exist" << endl;
-    //     return NULL;
-    // }
-    cout << "Multiply Matrices" << endl;
-
-    cout << "Matrix elements at (50,50): \t" << resolutionMat(50,50) << "\t" << residualMat(50,50) << endl;
-    
     combinedMatrix.Mult(resolutionMat, residualMat);
-
     cout << "GetCombinedMatrix End" << endl;
     return combinedMatrix;
 }
@@ -175,7 +166,6 @@ void CombineNormalizedMatrices()
     vector<TH2F*> smearHistsLA = ConvertTMatricesToTH2Fs(smearMatricesLA, smearNamesLA);
 
     // Save the histograms
-
     TFile outFile("SmearHistograms.root","Update");
     for (UInt_t iHist = 0; iHist < smearHistsLLAA.size(); iHist++) {
         outFile.cd();
@@ -187,6 +177,16 @@ void CombineNormalizedMatrices()
         smearHistsLA[iHist]->Write(smearHistsLA[iHist]->GetName(),
                                    TObject::kOverwrite);
     }
+
+    // Save smear histograms for primary LL and LA.
+    // No residual transform, so just resave the resolution histogram
+    TString smearPrimaryLambdaNameLLAA = "SmearMatrixLambdaLambdaNormLLAA";
+    resolutionLLAAHist->SetTitle(smearPrimaryLambdaNameLLAA);
+    resolutionLLAAHist->Write(smearPrimaryLambdaNameLLAA, TObject::kOverwrite);
+
+    TString smearPrimaryLambdaNameLA = "SmearMatrixLambdaLambdaNormLA";
+    resolutionLAHist->SetTitle(smearPrimaryLambdaNameLA);
+    resolutionLAHist->Write(smearPrimaryLambdaNameLA, TObject::kOverwrite);
     cout << "End macro" << endl;
 
 }
