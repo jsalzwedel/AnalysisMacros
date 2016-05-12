@@ -110,9 +110,8 @@ vector<TMatrix> MakeCombinedMatricesForPairType(TMatrix &resolutionMatrix,
     // LLAA and LA matrices separately
     vector<TMatrix> smearedMatrices;
     for (UInt_t iMat = 0; iMat < residualMatrices.size(); iMat++) {
-        cout << residualMatrices[iMat].Class() << "\t" << resolutionMatrix.Class() << endl;
         TMatrix combinedMat = GetCombinedMatrix(residualMatrices[iMat],
-                                                 resolutionMatrix);
+						resolutionMatrix);
         smearedMatrices.push_back(combinedMat);
     }
     cout << "MakeCombinedMatricesForPairType End" << endl;
@@ -130,6 +129,7 @@ vector<TH2F*> ConvertTMatricesToTH2Fs(vector<TMatrix> &matrices,
         TH2F* histogram = new TH2F(matrices[iMat]);
         histogram->SetName(smearNames[iMat]);
         histogram->SetTitle(smearNames[iMat]);
+	histogram->SetBins(200, 0., 2., 200, 0., 2.); 
         hists.push_back(histogram);
     }
 
