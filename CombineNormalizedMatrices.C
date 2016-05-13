@@ -169,11 +169,15 @@ void CombineNormalizedMatrices()
     TFile outFile("SmearHistograms.root","Update");
     for (UInt_t iHist = 0; iHist < smearHistsLLAA.size(); iHist++) {
         outFile.cd();
+	smearHistsLLAA[iHist]->GetYaxis()->SetTitle("k*^{recon}_{#Lambda#Lambda}");
+	smearHistsLLAA[iHist]->GetXaxis()->SetTitle("k*^{true}");
         smearHistsLLAA[iHist]->Write(smearHistsLLAA[iHist]->GetName(),
                                      TObject::kOverwrite);
     }
     for (UInt_t iHist = 0; iHist < smearHistsLA.size(); iHist++) {
         outFile.cd();
+	smearHistsLA[iHist]->GetYaxis()->SetTitle("k*^{recon}_{#Lambda#bar{#Lambda}}");
+	smearHistsLA[iHist]->GetXaxis()->SetTitle("k*^{true}");
         smearHistsLA[iHist]->Write(smearHistsLA[iHist]->GetName(),
                                    TObject::kOverwrite);
     }
@@ -182,10 +186,14 @@ void CombineNormalizedMatrices()
     // No residual transform, so just resave the resolution histogram
     TString smearPrimaryLambdaNameLLAA = "SmearMatrixLambdaLambdaNormLLAA";
     resolutionLLAAHist->SetTitle(smearPrimaryLambdaNameLLAA);
+    resolutionLLAAHist->GetYaxis()->SetTitle("k*^{recon}_{#Lambda#Lambda}");
+    resolutionLLAAHist->GetXaxis()->SetTitle("k*^{true}");
     resolutionLLAAHist->Write(smearPrimaryLambdaNameLLAA, TObject::kOverwrite);
 
     TString smearPrimaryLambdaNameLA = "SmearMatrixLambdaLambdaNormLA";
     resolutionLAHist->SetTitle(smearPrimaryLambdaNameLA);
+    resolutionLAHist->GetYaxis()->SetTitle("k*^{recon}_{#Lambda#bar{#Lambda}}");
+    resolutionLAHist->GetXaxis()->SetTitle("k*^{true}");
     resolutionLAHist->Write(smearPrimaryLambdaNameLA, TObject::kOverwrite);
     cout << "End macro" << endl;
 
