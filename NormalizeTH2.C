@@ -27,7 +27,7 @@ TH2 *NormalizeTH2(TH2* hist, TString optionAxis)
         // Normalizing rows
         for (Int_t iRow = 1; iRow <= nBinsNorm; iRow++) {
             Double_t norm = 0.;
-            for (Int_t iCol = 1; iCol < otherAxis->GetNbins(); iCol++) {
+            for (Int_t iCol = 1; iCol <= otherAxis->GetNbins(); iCol++) {
                 norm += hist->GetBinContent(iCol, iRow);
             }
             if (norm < 0.01) continue; // Avoid divide by zero
@@ -40,7 +40,7 @@ TH2 *NormalizeTH2(TH2* hist, TString optionAxis)
     } else {
         for (Int_t iCol = 1; iCol <= nBinsNorm; iCol++) {
             Double_t norm = 0.;
-            for (Int_t iRow = 1; iRow < otherAxis->GetNbins(); iRow++) {
+            for (Int_t iRow = 1; iRow <= otherAxis->GetNbins(); iRow++) {
                 norm += hist->GetBinContent(iCol, iRow);
             }
             if (norm < 0.01) continue; // Avoid divide by zero
