@@ -8,6 +8,46 @@
 
 // Save LLAAMixed and LAMixed to file as smearing for primary particles
 
+
+TH2F* DoHistMatrixMult(TH2F* hist1, TH2F* hist2, TString newName)
+{
+  // Do matrix muliplication of two TH2s
+
+  // Make sure that the number of columns and rows match
+  assert(hist1->GetNbinsX() == hist2->GetNbinsY());
+  Int_t nMatchingElements = hist1->GetNbinsX();
+
+  // Create a histogram in which to store the results
+  Int_t nBinsX = hist1->GetNbinsY();
+  Double_t lowXrange = hist1->GetYaxis()->GetBinLowEdge(1);
+  Double_t highXrange = hist1->GetYaxis()->GetBinUpEdge(200);
+
+  Int_t nBinsY = hist2->GetNbinsX();
+  Double_t lowYrange = hist2->GetXaxis()->GetBinLowEdge(1);
+  Double_t highYrange = hist2->GetXaxis()->GetBinUpEdge(200);
+
+  TH2F *finalHist = new TH2F(newName, newName,
+			     nBinsX, lowXrange, highXrange,
+			     nBinsY, lowYrange, highYrange);
+
+  // Do the multiplication
+  for (Int_t iRow = 1; iRow <= nBinsY; iRow++) {
+    Int_t rowTotal = 0.; // Sanity check - this should add up to unity
+    for (Int_t iCol = 1; iCol <= nBinsX; iCol++) {
+      Double_t val = 0.;
+      for (Int_t iElement = 1; iElement <= nMatchingElements; iElement++) {
+	val += hist1->GetBinContent(iElement, iRow)
+	         * hist2->GetBinContent(iCol, iElement);
+      }
+      finalHist->SetBinContent(iCol, iRow, val);
+      rowTotal += val;
+    }
+    cout << "For row "<< iRow << ", total is " << rowTotal << endl;
+  }
+			     
+  return finalHist;
+}
+
 TMatrix ConvertTH2FtoMatrix(TH2F* hist, Bool_t shouldTranspose)
 {
     cout << "ConvertTH2toMatrix Begin" << endl;
