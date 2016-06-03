@@ -19,7 +19,8 @@ TH2F *TransposeTH2(TH2 *hist, TString nameSuffix = "")
 			     nBinsX, lowXrange, highXrange,
 			     nBinsY, lowYrange, highYrange);
   transHist->SetEntries(hist->GetEntries());
-
+  transHist->GetXaxis()->SetTitle(hist->GetYaxis()->GetTitle());
+  transHist->GetYaxis()->SetTitle(hist->GetXaxis()->GetTitle());
   // Copy over elements (including overflow/underflow)
   for (Int_t iOldCol = 0; iOldCol < hist->GetNbinsX()+2; iOldCol++) {
     for (Int_t iOldRow = 0; iOldRow < hist->GetNbinsY()+2; iOldRow++) {
