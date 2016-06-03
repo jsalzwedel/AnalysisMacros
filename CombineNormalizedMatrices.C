@@ -12,10 +12,20 @@
 TH2F* DoHistMatrixMult(TH2F* hist1, TH2F* hist2, TString newName)
 {
   // Do matrix muliplication of two TH2s
+  cout << "DoHistMatrixMult Begin" << endl;
 
+  if (!hist1) {
+    cout << "hist1 is NULL. Cannot do matrix multiplication." << endl;
+    return NULL;
+  }
+  if (!hist2) {
+    cout << "hist2 is NULL. Cannot do matrix multiplication." << endl;
+    return NULL;
+  }
   // Make sure that the number of columns and rows match
   assert(hist1->GetNbinsX() == hist2->GetNbinsY());
   Int_t nMatchingElements = hist1->GetNbinsX();
+
 
   // Create a histogram in which to store the results
   Int_t nBinsX = hist1->GetNbinsY();
@@ -32,7 +42,7 @@ TH2F* DoHistMatrixMult(TH2F* hist1, TH2F* hist2, TString newName)
 
   // Do the multiplication
   for (Int_t iRow = 1; iRow <= nBinsY; iRow++) {
-    Int_t rowTotal = 0.; // Sanity check - this should add up to unity
+    Double_t rowTotal = 0.; // Sanity check - this should add up to unity
     for (Int_t iCol = 1; iCol <= nBinsX; iCol++) {
       Double_t val = 0.;
       for (Int_t iElement = 1; iElement <= nMatchingElements; iElement++) {
@@ -44,7 +54,8 @@ TH2F* DoHistMatrixMult(TH2F* hist1, TH2F* hist2, TString newName)
     }
     cout << "For row "<< iRow << ", total is " << rowTotal << endl;
   }
-			     
+
+  cout << "DoHistMatrixMult End" << endl;
   return finalHist;
 }
 
@@ -103,29 +114,60 @@ vector<TString> GetResidualHistNames()
     return histNames;
 }
 
-vector<TMatrix> GetResidualMatrices(vector<TString> histNames)
+vector<TH2F*> GetResidualHistograms()
 {
-    cout << "GetResidualMatrices Begin" <<endl;
+    cout << "GetResidualHistograms Begin" <<endl;
     TString filePath = "$RESULTS/AnalysisResults/NormalizedTransformMatrices.root";
     TFile inFile(filePath);
-    TDirectory *dir = inFile.GetDirectory("Normalized");
 
-    vector<TMatrix> residualMatrices;
+    TDirectory *dir = inFile.GetDirectory("TransposedNorm");
+    if(!dir) {
+      cout << "Could not find histogram directory" << endl;
+      assert(0);
+    }
+    
+    vector<TH2F*> residualHists;
+    vector<TString> histNames = GetResidualHistNames();
     for (UInt_t iName = 0; iName < histNames.size(); iName++) {
         TH2F* hist = (TH2F*) dir->Get(histNames[iName]);
 	if (!hist) {
 	  cout << "Could not find histogram with name " << histNames[iName] << endl;
 	  continue;
 	}
-        Bool_t shouldTranspose = kTRUE;
-        TMatrix residualMatrix = ConvertTH2FtoMatrix(hist, shouldTranspose);
-        residualMatrices.push_back(residualMatrix);
+        // Bool_t shouldTranspose = kTRUE;
+        // TMatrix residualMatrix = ConvertTH2FtoMatrix(hist, shouldTranspose);
+	hist->SetDirectory(0);
+        residualHists.push_back(hist);
     }
 
-    cout << "GetResidualMatrices End" <<endl;
+    cout << "GetResidualHistograms End" <<endl;
 
-    return residualMatrices;
+    return residualHists;
 }
+
+// vector<TMatrix> GetResidualMatrices(vector<TString> histNames)
+// {
+//     cout << "GetResidualMatrices Begin" <<endl;
+//     TString filePath = "$RESULTS/AnalysisResults/NormalizedTransformMatrices.root";
+//     TFile inFile(filePath);
+//     TDirectory *dir = inFile.GetDirectory("Normalized");
+
+//     vector<TMatrix> residualMatrices;
+//     for (UInt_t iName = 0; iName < histNames.size(); iName++) {
+//         TH2F* hist = (TH2F*) dir->Get(histNames[iName]);
+// 	if (!hist) {
+// 	  cout << "Could not find histogram with name " << histNames[iName] << endl;
+// 	  continue;
+// 	}
+//         Bool_t shouldTranspose = kTRUE;
+//         TMatrix residualMatrix = ConvertTH2FtoMatrix(hist, shouldTranspose);
+//         residualMatrices.push_back(residualMatrix);
+//     }
+
+//     cout << "GetResidualMatrices End" <<endl;
+
+//     return residualMatrices;
+// }
 
 
 vector<TString> GetSmearMatrixNames(vector<TString> smearNames, Bool_t isLLAA)
@@ -141,22 +183,48 @@ vector<TString> GetSmearMatrixNames(vector<TString> smearNames, Bool_t isLLAA)
     return smearNames;
 }
 
-vector<TMatrix> MakeCombinedMatricesForPairType(TMatrix &resolutionMatrix,
-                                                 vector<TMatrix> &residualMatrices)
+vector<TH2F*> MakeCombinedHistogramsForPairType(TH2F *resolutionHist,
+						  vector<TH2F*> residualHists,
+						  vector<TString> smearNames)
 {
-    cout << "MakeCombinedMatricesForPairType Begin" << endl;
+    cout << "MakeCombinedHistogramsForPairType Begin" << endl;
     // For each residual correlation matrix, multiply it with the common
     // resolution matrix to get a combined smeared matrix. Designed to handle
     // LLAA and LA matrices separately
-    vector<TMatrix> smearedMatrices;
-    for (UInt_t iMat = 0; iMat < residualMatrices.size(); iMat++) {
-        TMatrix combinedMat = GetCombinedMatrix(residualMatrices[iMat],
-						resolutionMatrix);
-        smearedMatrices.push_back(combinedMat);
+
+    assert(residualHists.size() == smearNames.size());
+    
+    vector<TH2F*> smearedHists;
+    for (UInt_t iHist = 0; iHist < residualHists.size(); iHist++) {
+      TH2F *combinedHist = DoHistMatrixMult(resolutionHist,
+					    residualHists[iHist],
+					    smearNames[iHist]);
+      if(!combinedHist) {
+	cout << "Could not create combined hist" << endl;
+	assert(0);
+      }
+      smearedHists.push_back(combinedHist);
     }
-    cout << "MakeCombinedMatricesForPairType End" << endl;
-    return smearedMatrices;
+    cout << "MakeCombinedHistogramsForPairType End" << endl;
+    return smearedHists;
 }
+
+// vector<TMatrix> MakeCombinedMatricesForPairType(TMatrix &resolutionMatrix,
+//                                                  vector<TMatrix> &residualMatrices)
+// {
+//     cout << "MakeCombinedMatricesForPairType Begin" << endl;
+//     // For each residual correlation matrix, multiply it with the common
+//     // resolution matrix to get a combined smeared matrix. Designed to handle
+//     // LLAA and LA matrices separately
+//     vector<TMatrix> smearedMatrices;
+//     for (UInt_t iMat = 0; iMat < residualMatrices.size(); iMat++) {
+//         TMatrix combinedMat = GetCombinedMatrix(residualMatrices[iMat],
+// 						resolutionMatrix);
+//         smearedMatrices.push_back(combinedMat);
+//     }
+//     cout << "MakeCombinedMatricesForPairType End" << endl;
+//     return smearedMatrices;
+// }
 
 vector<TH2F*> ConvertTMatricesToTH2Fs(vector<TMatrix> &matrices,
                                       vector<TString> smearNames)
@@ -183,27 +251,31 @@ void CombineNormalizedMatrices()
     // Get the momentum resolution histograms and convert them into matrices
     TFile resolutionFile("MomentumResolutionMatrices.root","read");
     TH2F *resolutionLLAAHist = (TH2F*)resolutionFile.Get("Normalized/fResMatrixLLAAMixedAllRebinNorm");
-    TMatrix resolutionLLAAMatrix = ConvertTH2FtoMatrix(resolutionLLAAHist, kFALSE);
+    if(!resolutionLLAAHist) {
+      cout << "Could not find fResMatrixLLAAMixedAllRebinNorm" << endl;
+      return;
+    }
     TH2F *resolutionLAHist = (TH2F*)resolutionFile.Get("Normalized/fResMatrixLAMixedAllRebinNorm");
-    TMatrix resolutionLAMatrix = ConvertTH2FtoMatrix(resolutionLAHist, kFALSE);
+        if(!resolutionLAHist) {
+      cout << "Could not find fResMatrixLAMixedAllRebinNorm" << endl;
+      return;
+    }
 
     // Get the residual correlation histograms and convert them into matrices
-    TFile residualFile("NormalizedTransformMatrices.root");
-    vector<TString> histNames = GetResidualHistNames();
-    vector<TMatrix> residualMatrices = GetResidualMatrices(histNames);
+    vector<TH2F *> residualHists = GetResidualHistograms();
 
     // Create names for the final smear histograms
+    vector<TString> histNames = GetResidualHistNames();
     vector<TString> smearNamesLLAA = GetSmearMatrixNames(histNames, kTRUE);
     vector<TString> smearNamesLA = GetSmearMatrixNames(histNames, kFALSE);
 
-    // Make combined smear matrices
-    vector<TMatrix> smearMatricesLLAA = MakeCombinedMatricesForPairType(resolutionLLAAMatrix,
-                                                                         residualMatrices);
-    vector<TMatrix> smearMatricesLA = MakeCombinedMatricesForPairType(resolutionLAMatrix,
-                                                                       residualMatrices);
-    // Convert the smear matrices back into histograms
-    vector<TH2F*> smearHistsLLAA = ConvertTMatricesToTH2Fs(smearMatricesLLAA, smearNamesLLAA);
-    vector<TH2F*> smearHistsLA = ConvertTMatricesToTH2Fs(smearMatricesLA, smearNamesLA);
+    // Make combined smear histograms
+    vector<TH2F*> smearHistsLLAA = MakeCombinedHistogramsForPairType(resolutionLLAAHist,
+									residualHists,
+									smearNamesLLAA);
+    vector<TH2F*> smearHistsLA = MakeCombinedHistogramsForPairType(resolutionLAHist,
+								      residualHists,
+								      smearNamesLA);
 
     // Save the histograms
     TFile outFile("SmearHistograms.root","Update");
