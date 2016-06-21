@@ -19,6 +19,8 @@ void WriteObjectsToDir(TDirectory *cfDir, TDirectory *countDir, TH1D *cf, TVecto
   countDir->cd();
   TString countName = cf->GetName();
   countName.ReplaceAll("CF","Count");
+  cout << "Wrote " << countName << "with " << counts(0)
+       << "counts." << endl;
   counts.Write(countName, TObject::kOverwrite);
 }
 
@@ -113,8 +115,8 @@ void MakeCFsForDataset(TDirectory *dataDir, Int_t rebinNumber, Double_t lowNorm,
       continue;
     }
     // Finally, make and save the CF and counts
+    TVectorD count = GetNumCounts(numHist, lowNorm, highNorm);
     TH1D *cf = MakeACF(numHist, denHist, rebinNumber, lowNorm, highNorm);
-    TVectorD count = GetNumCounts(numHist, lowNorm, highNorm);  
     WriteObjectsToDir(cfDir, countDir, cf, count);
 
     cout<<"Finished making cf"<<endl;
@@ -154,7 +156,10 @@ void MakeCFs(Bool_t isDataCompact, Bool_t isTrainResult,
 	<<currentDataDir->GetName()<<endl;
     for(UInt_t iName = 0; iName < dataNames.size(); iName++) {
       TDirectory *fieldDir = currentDataDir->GetDirectory(dataNames[iName]);
-      assert(fieldDir);
+      if(!fieldDir) {
+	cout << "Could not find TDirectory for " << dataNames[iName] << endl;
+	continue;
+      }
       MakeCFsForDataset(fieldDir, rebinNumber, lowNorm, highNorm);
     }
   }

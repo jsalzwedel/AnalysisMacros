@@ -27,10 +27,12 @@ vector<TDirectory*> GetDirectories(TDirectory *f, vector<TString> dataSetNames, 
   UInt_t nDirs = dataSetNames.size();
 
   for(UInt_t i = 0; i < nDirs; i++) {
-    // TDirectory *dir = (TDirectory*) f->Get(dataSetNames[i]);
     TString fullDirName = dataSetNames[i] + "/" + dirName;
     TDirectory *dir = (TDirectory*) f->Get(fullDirName);
-    assert(dir);
+    if(!dir) {
+      cout << "MakeCombinedCFs -- Could not find directory named " << fullDirName << endl;
+      continue;
+    }
     dirs.push_back(dir);
   }
   return dirs;
