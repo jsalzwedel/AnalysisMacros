@@ -1,8 +1,8 @@
-#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/AnalyzeSystematics.C"
-#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/CombineSystematics.C"
-#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/DrawCFWithErrors.C"
-#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/CombineTGraphErrors.C"
-#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/DefineEnums.C"
+#include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/AnalyzeSystematics.C"
+#include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/CombineSystematics.C"
+#include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/DrawCFWithErrors.C"
+#include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/CombineTGraphErrors.C"
+#include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/DefineEnums.C"
 
 void RunAllSystematics(Bool_t shouldAddInQuad) {
 
@@ -14,8 +14,11 @@ void RunAllSystematics(Bool_t shouldAddInQuad) {
   Double_t fitRangeHigh = 1.;
   AnalyzeSystematics(nSigmaCut, useNSigmaTest, fitRangeLow, fitRangeHigh, kTopStudy);
   AnalyzeSystematics(nSigmaCut, useNSigmaTest, fitRangeLow, fitRangeHigh, kAvgSepStudy);
+
+  TString topCutsPath = "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-05/07-FixedTOFTopCuts";
+  TString avgSepCutsPath = "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-04/22-Train-FixedTOF";
   
-  CombineSystematics(shouldAddInQuad);
+  CombineSystematics(shouldAddInQuad, topCutsPath, avgSepCutsPath);
   DrawCFWithErrors(kTopStudy, shouldAddInQuad);
   DrawCFWithErrors(kAvgSepStudy, shouldAddInQuad);
   CombineTGraphErrors(shouldAddInQuad);
