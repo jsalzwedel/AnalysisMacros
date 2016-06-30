@@ -190,10 +190,10 @@ TGraphAsymmErrors *ConstructAsymmTGraph(const TH1D* baseHist, const vector<Doubl
   }
   
   for (UInt_t iBin = 0; iBin < posVals.size(); iBin++) {
-    cout<<"Bin: "<<iBin
-	<<"\tErrLow: "<<negVals[iBin]
-	<<"\tErrHigh: "<<posVals[iBin]
-	<<endl;
+    // cout<<"Bin: "<<iBin
+    // 	<<"\tErrLow: "<<negVals[iBin]
+    // 	<<"\tErrHigh: "<<posVals[iBin]
+    // 	<<endl;
     graph->SetPointEYlow(iBin, negVals[iBin]);
     graph->SetPointEYhigh(iBin, posVals[iBin]);
   }
@@ -245,15 +245,7 @@ TH1D *GetBaseHistogram(Int_t iSys, TString filePath, StudyType sysStudyType)
   // This is the default CF that uses all nominal cut values.
 
   TFile inputFile(filePath, "read");
-  TString dirPath;
-  if (kTopStudy == sysStudyType) {
-    dirPath = "Var0/Cut1/Merged";
-  } else if (kAvgSepStudy == sysStudyType) {
-    dirPath = "Study0Var0/Cut1/Merged";
-  } else {
-    cout << "No systematics for this SysStudyType" << endl;
-    return NULL;
-  }
+  TString dirPath = "Study0Var0/Cut1/Merged";
   
   TDirectory *dir = inputFile.GetDirectory(dirPath);
   if(!dir) {
@@ -337,12 +329,7 @@ void CombineSystematicsForStudy(TString filePath, StudyType sysStudyType, Bool_t
   cout << "All done combining systematics for this study" << endl;
 }
 
-void CombineSystematics(Bool_t shouldAddInQuad) {
-
-  TString filePathTop = "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-03/04-Train-SysCutChecks";
+void CombineSystematics(Bool_t shouldAddInQuad, TString filePathTop, TString filePathAvgSep) {
   CombineSystematicsForStudy(filePathTop, kTopStudy, shouldAddInQuad);
-
-  TString filePathAvgSep = "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/2016-04/08-Train-TTCSys";
   CombineSystematicsForStudy(filePathAvgSep, kAvgSepStudy, shouldAddInQuad);
-
 }

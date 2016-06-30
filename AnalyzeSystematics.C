@@ -121,7 +121,7 @@ vector<TString> GetUserVarDirectoryNames(StudyType type)
 
   if (kTopStudy == type) {
     for (Int_t i = 1; i < 11; i++) {
-      TString thisName = "Var";
+      TString thisName = "Study1Var";
       thisName += i;
       names.push_back(thisName);
     }
