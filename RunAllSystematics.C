@@ -1,10 +1,10 @@
-#include "AnalyzeSystematics.C"
-#include "CombineSystematics.C"
-#include "DrawCFWithErrors.C"
-#include "CombineTGraphErrors.C"
-#include "DefineEnums.C"
+#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/AnalyzeSystematics.C"
+#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/CombineSystematics.C"
+#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/DrawCFWithErrors.C"
+#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/CombineTGraphErrors.C"
+#include "~/Analysis/lambda/AliAnalysisLambda/Results/macros/DefineEnums.C"
 
-void FinalizeSystematics(Bool_t shouldAddInQuad) {
+void RunAllSystematics(Bool_t shouldAddInQuad) {
 
     // Compute systematic differences between cuts and fit
     // to look for significance.
