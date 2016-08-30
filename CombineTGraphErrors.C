@@ -1,4 +1,4 @@
-
+# include "/home/jai/Analysis/lambda/AliAnalysisLambda/Results/macros/GetDate.C"
 
 
 TGraphAsymmErrors* CombineTwoTGraphAsymm(TGraphAsymmErrors *graph1, TGraphAsymmErrors *graph2, TH1D *baseHist, Bool_t shouldAddQuadrature)
@@ -115,7 +115,9 @@ void WriteResults(TGraphAsymmErrors *errors, TH1D *hist, TDirectory *outDir, Boo
   hist->Draw();
   errors->Draw("E2");
 
-  TString outputName = outputBashDir + "/" + histName + "CombinedSystematics";
+  TString date = GetDate(kTRUE);
+  
+  TString outputName = outputBashDir + "/" + date + histName + "CombinedSystematics";
   outputName += errorCombinationType;
   c1.SaveAs(outputName + ".png");
   c1.SaveAs(outputName + ".eps");
