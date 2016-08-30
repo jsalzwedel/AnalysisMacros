@@ -19,6 +19,8 @@ void DrawSmearMatrixPretty(TH2F *matrix, TString histTitle, Bool_t isLogZ)
   c1->SetCanvasSize(500,500);
   c1->SetLogz(isLogZ);
 
+  if(isLogZ) histTitle += " (Log Scale)";
+  
   // Pretty Axes
   MakePrettyAxis(matrix->GetXaxis());
   MakePrettyAxis(matrix->GetYaxis());
