@@ -60,6 +60,45 @@ void WriteResults(TGraphAsymmErrors *errors, TH1D *hist, TDirectory *outDir, Boo
     errorCombinationType += "Maximum";
   }
   graphName += errorCombinationType;
+
+  // Pretty up the plot
+  hist->SetNdivisions(505,"xy");
+  hist->SetAxisRange(0.8, 1.1, "y");
+  hist->SetAxisRange(0., 0.5, "X");
+  hist->GetXaxis()->SetTitleOffset(0.8);
+  hist->SetMarkerStyle(kFullCircle);
+  hist->GetYaxis()->SetTitle("C(k*)");
+  hist->SetTitleSize(0.06, "y");
+  hist->GetYaxis()->SetTitleOffset(0.7);
+  hist->GetYaxis()->CenterTitle();
+  errors->SetLineColor(kRed);
+  errors->SetFillStyle(0);
+  gStyle->SetOptStat(0);
+
+  // Give the plot a nicer title
+  TString system;
+  TString centrality;
+  TString oldTitle = hist->GetTitle();
+  if (oldTitle.Contains("LamALam")) system = "#Lambda#bar{#Lambda}";
+  else if (oldTitle.Contains("LLAA")) system = "#Lambda#Lambda";
+  else {
+    cout << "Could not parse histogram title for system name"
+	 << endl;
+    system = "BadSystemName";
+  }
+
+  if (oldTitle.Contains("010")) centrality = "0-10%";
+  else if (oldTitle.Contains("1030")) centrality = "10-30%";
+  else if (oldTitle.Contains("3050")) centrality = "30-50%";
+  else {
+    cout << "Could not parse histogram title for centrality"
+	 << endl;
+    centrality = "BadCentrality";
+  }
+
+  TString newTitle = system + " " + centrality;
+  hist->SetTitle(newTitle);
+   
   errors->Write(graphName, TObject::kOverwrite);
   hist->Write(histName, TObject::kOverwrite);
 
@@ -70,14 +109,7 @@ void WriteResults(TGraphAsymmErrors *errors, TH1D *hist, TDirectory *outDir, Boo
     gSystem->mkdir(outputBashDir, kTRUE);
   }
 
-  // Pretty up the plot
-  hist->SetNdivisions(505,"xy");
-  hist->SetAxisRange(0.8, 1.1, "y");
-  hist->SetAxisRange(0., 0.5, "X");
-  hist->SetMarkerStyle(kFullCircle);
-  errors->SetLineColor(kRed);
-  errors->SetFillStyle(0);
-  gStyle->SetOptStat(0);
+
 
   TCanvas c1(histName + "Can", histName);
   hist->Draw();
